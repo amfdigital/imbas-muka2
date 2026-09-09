@@ -579,21 +579,37 @@ async function rekodKehadiranSistem() {
             }
         }
 
-        // FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
+// FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
         async function hantarPermohonanCuti() {
-            // Pastikan ID elemen mengikut HTML borang cuti anda
-            const id = document.getElementById('cuti-employee-id').value;
-            const nama = document.getElementById('cuti-employee-name').value;
-            const sebab = document.getElementById('cuti-reason') ? document.getElementById('cuti-reason').value : "Cuti Umum";
-            const tarikhMula = document.getElementById('cuti-start-date') ? document.getElementById('cuti-start-date').value : new Date().toISOString().split('T')[0];
-            const tarikhAkhir = document.getElementById('cuti-end-date') ? document.getElementById('cuti-end-date').value : tarikhMula;
+            // Ambil elemen dengan selamat
+            const elId = document.getElementById('cuti-employee-id');
+            const elNama = document.getElementById('cuti-employee-name');
+            const elSebab = document.getElementById('cuti-reason');
+            const elTarikhMula = document.getElementById('cuti-start-date');
+            const elTarikhAkhir = document.getElementById('cuti-end-date');
 
-            if(!id || !nama || nama === 'ID tidak ditemui') {
-                alert("Sila masukkan ID Pekerja yang sah.");
+            const id = elId ? elId.value.trim() : "";
+            const nama = elNama ? elNama.value.trim() : "";
+            const sebab = elSebab ? elSebab.value : "Cuti Umum";
+            
+            // Dapatkan tarikh hari ini sebagai format YYYY-MM-DD yang selamat
+            const dKini = new Date();
+            const tarikhHariIni = `${dKini.getFullYear()}-${String(dKini.getMonth() + 1).padStart(2, '0')}-${String(dKini.getDate()).padStart(2, '0')}`;
+            
+            const tarikhMula = elTarikhMula && elTarikhMula.value ? elTarikhMula.value : tarikhHariIni;
+            const tarikhAkhir = elTarikhAkhir && elTarikhAkhir.value ? elTarikhAkhir.value : tarikhMula;
+
+            // Validasi asas
+            if (!id || !nama || nama === 'ID tidak ditemui' || nama === 'ID tidak ditemui di dalam sistem') {
+                alert("Sila masukkan ID Pekerja yang sah dan pastikan nama telah dijana.");
+                if (elId) elId.focus();
                 return;
             }
 
             try {
+                // Paparkan status sedang menghantar (opsional untuk pengguna tahu)
+                console.log("Menghantar permohonan cuti...", { id, nama, sebab, tarikhMula, tarikhAkhir });
+
                 const response = await fetch(urlWebApps, {
                     method: 'POST',
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -609,16 +625,20 @@ async function rekodKehadiranSistem() {
                 });
 
                 const result = await response.json();
-                if (result.result === "success") {
+                
+                if (result && result.result === "success") {
                     alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan!");
-                    document.getElementById('leaveForm').reset();
-                    document.getElementById('cuti-employee-name').value = '';
+                    
+                    // Reset borang dengan selamat
+                    const formCuti = document.getElementById('leaveForm');
+                    if (formCuti) formCuti.reset();
+                    if (elNama) elNama.value = '';
                 } else {
-                    alert("Gagal menghantar permohonan.");
+                    alert("Gagal menghantar permohonan. Sila cuba lagi.");
                 }
             } catch (err) {
-                console.error(err);
-                alert("Ralat sambungan ke pelayan.");
+                console.error("Ralat AJAX:", err);
+                alert("Ralat sambungan ke pelayan Google Apps Script.");
             }
         }
 
