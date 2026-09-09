@@ -490,7 +490,7 @@
             document.getElementById('tabel-tidakhadir-body').innerHTML = htmlTidakHadir;
         }
 
-        async function rekodKehadiranSistem() {
+async function rekodKehadiranSistem() {
             const videoEl = document.getElementById('webcam-scanner');
             document.getElementById('status-kotak').innerHTML = `
                 <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-spin">
@@ -500,18 +500,15 @@
             `;
 
             try {
-                // 1. Dapatkan senarai terbaru dari pelayan TAPI JANGAN overwrite senaraiPekerjaDB utama
                 const res = await fetch(`${urlWebApps}?action=employees`);
                 const rawData = await res.json();
                 const senaraiSemua = Array.isArray(rawData) ? rawData : (rawData.employees || []);
                 
-                // Kemaskini senarai utama di latar belakang supaya Dashboard kekal tepat
                 if(senaraiSemua.length > 0) {
                     senaraiPekerjaDB = senaraiSemua; 
                     document.getElementById('stat-jumlah-pekerja').textContent = senaraiPekerjaDB.length;
                 }
 
-                // 2. Buat senarai KHAS untuk pengesanan wajah sahaja (pekerja yang ada data wajah)
                 const pekerjaBerwajah = senaraiSemua.filter(emp => emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0);
 
                 if (pekerjaBerwajah.length === 0) {
@@ -519,7 +516,6 @@
                     return;
                 }
 
-                // 3. Mula mengimbas wajah dari kamera
                 const detection = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
                     .withFaceLandmarks()
                     .withFaceDescriptor();
@@ -529,7 +525,6 @@
                     return;
                 }
 
-                // 4. Padankan wajah dengan senarai pekerjaBerwajah
                 let labeledDescriptors = pekerjaBerwajah.map(emp => new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]));
                 const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
                 const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
@@ -537,18 +532,15 @@
                 if (bestMatch.label === 'unknown') {
                     document.getElementById('status-kotak').innerHTML = `<h4 class="font-bold text-red-600 text-sm">Wajah Tidak Dikenali</h4>`;
                 } else {
-                    // Cari butiran pekerja yang berjaya dipadankan
                     const pekerjaPadan = senaraiPekerjaDB.find(e => e.employeeId === bestMatch.label);
                     const namaPekerja = pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label;
                     const jabatanPekerja = pekerjaPadan ? pekerjaPadan.department : '';
                     
-                    // Format tarikh YYYY-MM-DD
                     const d = new Date();
                     const tarikhHariIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     
                     const sudahHadirHariIni = rekodKehadiranSemua.some(h => h.id === bestMatch.label && h.tarikh === tarikhHariIni);
 
-                    // 5. Jika belum hadir, masukkan dalam Array kehadiran tempatan
                     if (!sudahHadirHariIni) {
                         rekodKehadiranSemua.push({
                             id: bestMatch.label,
@@ -558,8 +550,17 @@
                             masa: new Date().toLocaleTimeString('ms-MY')
                         });
                         
-                        // NOTA PENTING: Untuk fungsi sebenar, anda patut HANTAR POST request ke GAS ('attendance') di sini.
-                        // Contoh: hantarKehadiranKeSheet(bestMatch.label, namaPekerja);
+                        // Hantar kehadiran ke Google Sheets secara automatik (POST)
+                        await fetch(urlWebApps, {
+                            method: 'POST',
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({
+                                type: "attendance",
+                                employeeId: bestMatch.label,
+                                employeeName: namaPekerja,
+                                status: "Hadir"
+                            })
+                        });
                     }
 
                     document.getElementById('status-kotak').innerHTML = `
@@ -570,7 +571,6 @@
                         <p class="text-xs text-slate-700 mt-2 font-bold bg-emerald-50 py-1.5 px-3 rounded-lg inline-block">${namaPekerja}</p>
                     `;
                     
-                    // 6. Kemaskini paparan Dashboard supaya ia memuat semula senarai
                     kemaskiniDashboardAnalisis();
                 }
             } catch (error) {
@@ -579,18 +579,52 @@
             }
         }
 
-        function hantarPermohonanCuti() {
-            const id = document.getElementById('cutiEmpId').value;
-            const nama = document.getElementById('cutiEmpName').value;
-            if(!id || !nama) {
-                alert("Sila lengkapkan ID dan Nama.");
+        // FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
+        async function hantarPermohonanCuti() {
+            // Pastikan ID elemen mengikut HTML borang cuti anda
+            const id = document.getElementById('cuti-employee-id').value;
+            const nama = document.getElementById('cuti-employee-name').value;
+            const sebab = document.getElementById('cuti-reason') ? document.getElementById('cuti-reason').value : "Cuti Umum";
+            const tarikhMula = document.getElementById('cuti-start-date') ? document.getElementById('cuti-start-date').value : new Date().toISOString().split('T')[0];
+            const tarikhAkhir = document.getElementById('cuti-end-date') ? document.getElementById('cuti-end-date').value : tarikhMula;
+
+            if(!id || !nama || nama === 'ID tidak ditemui') {
+                alert("Sila masukkan ID Pekerja yang sah.");
                 return;
             }
-            alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan.");
-            document.getElementById('leaveForm').reset();
+
+            try {
+                const response = await fetch(urlWebApps, {
+                    method: 'POST',
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        type: "leave",
+                        employeeId: id,
+                        employeeName: nama,
+                        reason: sebab,
+                        startDate: tarikhMula,
+                        endDate: tarikhAkhir,
+                        status: "Dalam Proses"
+                    })
+                });
+
+                const result = await response.json();
+                if (result.result === "success") {
+                    alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan!");
+                    document.getElementById('leaveForm').reset();
+                    document.getElementById('cuti-employee-name').value = '';
+                } else {
+                    alert("Gagal menghantar permohonan.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Ralat sambungan ke pelayan.");
+            }
         }
 
-        async function hantarDataPekerja() { alert("Fungsi pendaftaran simpan wajah pekerja aktif."); }
+        async function hantarDataPekerja() { 
+            alert("Fungsi pendaftaran simpan wajah pekerja aktif."); 
+        }
     </script>
 </body>
 </html>
