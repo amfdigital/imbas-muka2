@@ -388,7 +388,7 @@
             }
         }
 
-        async function hantarDataPekerja() {
+       async function hantarDataPekerja() {
             const empId = document.getElementById('empId').value;
             const empName = document.getElementById('empName').value;
             const department = document.getElementById('empDepartment').value;
@@ -431,7 +431,7 @@
                     employeeName: empName,
                     department: department,
                     role: role,
-                    faceDescriptor: JSON.stringify(descriptorArray)
+                    faceDescriptor: descriptorArray // Hantar sebagai array terus, Apps Script akan uruskan
                 };
 
                 const response = await fetch(urlWebApps, {
@@ -443,9 +443,8 @@
                 const result = await response.json();
                 if (result.result === "success") {
                     alert("Profil & Data Wajah Pekerja berjaya disimpan ke pangkalan data!");
-                    document.getElementById('selectSenaraiPekerja').value = "";
                     document.getElementById('employeeForm').reset();
-                    muatTurunSenaraiPekerja();
+                    if (typeof muatTurunSenaraiPekerja === 'function') muatTurunSenaraiPekerja();
                 } else {
                     alert("Gagal menyimpan data: " + (result.message || "Ralat tidak diketahui"));
                 }
@@ -466,13 +465,27 @@
 
             try {
                 const res = await fetch(`${urlWebApps}?action=employees`);
-                senaraiPekerjaDB = await res.json();
+                const rawData = await res.json();
 
-                if (!senaraiPekerjaDB || senaraiPekerjaDB.length === 0) {
+                if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
                     document.getElementById('status-kotak').innerHTML = `
                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-2"></i>
                         <h4 class="font-bold text-red-600 text-sm">Pangkalan Data Kosong</h4>
                         <p class="text-xs text-red-500 mt-1 font-bold">Sila Daftar Muka Terlebih Dahulu</p>
+                    `;
+                    return;
+                }
+
+                // TAPISAN KESELAMATAN: Hanya ambil pekerja yang ada faceDescriptor yang sah (bukan kosong)
+                senaraiPekerjaDB = rawData.filter(emp => {
+                    return emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0;
+                });
+
+                if (senaraiPekerjaDB.length === 0) {
+                    document.getElementById('status-kotak').innerHTML = `
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
+                        <h4 class="font-bold text-amber-600 text-sm">Tiada Data Wajah</h4>
+                        <p class="text-xs text-gray-500 mt-1">Pekerja wujud tetapi belum mendaftarkan wajah mereka.</p>
                     `;
                     return;
                 }
@@ -491,8 +504,7 @@
                 }
 
                 let labeledDescriptors = senaraiPekerjaDB.map(emp => {
-                    let descArray = JSON.parse(emp.faceDescriptor);
-                    return new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(descArray)]);
+                    return new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]);
                 });
 
                 const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
@@ -572,7 +584,7 @@
                 type: "leave",
                 employeeId: empId,
                 employeeName: empName,
-                leaveType: jenis === 'Sebab Lain' ? sebabLain : jenis,
+                reason: jenis === 'Sebab Lain' ? sebabLain : jenis,
                 startDate: mula,
                 endDate: akhir
             };
@@ -600,6 +612,7 @@
 
         function muatTurunSenaraiCuti() {
             const tbody = document.getElementById('senarai-cuti-body');
+            if(!tbody) return;
             tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Sedang memuat turun data...</td></tr>`;
 
             fetch(`${urlWebApps}?action=leaves`)
@@ -607,12 +620,12 @@
                 .then(data => {
                     if (data && Array.isArray(data) && data.length > 0) {
                         tbody.innerHTML = "";
-                        data.forEach((cuti, index) => {
+                        data.forEach((cuti) => {
                             let tr = document.createElement('tr');
                             tr.className = "border-b border-gray-100 hover:bg-gray-50";
                             tr.innerHTML = `
                                 <td class="p-3"><b>${cuti.employeeName}</b><br><span class="text-gray-400">${cuti.employeeId}</span></td>
-                                <td class="p-3">${cuti.leaveType}</td>
+                                <td class="p-3">${cuti.reason}</td>
                                 <td class="p-3">${cuti.startDate} hingga ${cuti.endDate}</td>
                                 <td class="p-3 text-center">
                                     <span class="px-2 py-1 rounded text-[10px] font-bold ${cuti.status === 'Lulus' ? 'bg-emerald-100 text-emerald-700' : cuti.status === 'Tolak' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">${cuti.status || 'Pending'}</span>
@@ -631,17 +644,18 @@
         }
 
         function tutupModalAdmin() {
-            document.getElementById('modal-admin').classList.add('hidden');
+            const modal = document.getElementById('modal-admin');
+            if(modal) modal.classList.add('hidden');
         }
 
         function sahAdminLogin(event) {
             event.preventDefault();
             const pass = document.getElementById('inputAdminPass').value;
-            if (pass === KATA_LALUAN_ADMIN) {
+            if (typeof KATA_LALUAN_ADMIN !== 'undefined' && pass === KATA_LALUAN_ADMIN) {
                 isAdminLogMasuk = true;
                 tutupModalAdmin();
                 alert("Log masuk admin berjaya!");
-                if (tindakanTertunda) tindakanTertunda();
+                if (typeof tindakanTertunda === 'function' && tindakanTertunda) tindakanTertunda();
             } else {
                 alert("Kata laluan salah!");
             }
