@@ -300,10 +300,13 @@
 
                 document.getElementById('text-model-kamera').textContent = "Memuat Model AI...";
                 
+                // Menggunakan pautan CDN langsung untuk mengelakkan ralat fail model hilang di GitHub
+                const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+
                 await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
-                    faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
-                    faceapi.nets.faceRecognitionNet.loadFromUri('./models')
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
                 
                 document.getElementById('status-model-kamera').className = "fa-solid fa-circle text-emerald-500 text-[8px]";
@@ -524,25 +527,26 @@
                     document.getElementById('status-kotak').innerHTML = `
                         <i class="fa-solid fa-circle-check text-emerald-500 text-3xl mb-2"></i>
                         <h4 class="font-bold text-emerald-600 text-sm">Kehadiran Berjaya Direkod!</h4>
-                        <p class="text-xs text-gray-600 mt-1"><b>${pekerjaPadan.employeeName}</b> (${pekerjaPadan.employeeId})</p>
+                        <p class="text-xs text-gray-600 mt-1">Terima kasih, <b>${pekerjaPadan.employeeName}</b>.</p>
                     `;
                 } else {
                     document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
-                        <h4 class="font-bold text-amber-600 text-sm">Gagal Rekod</h4>
-                        <p class="text-xs text-gray-500 mt-1">${result.message || 'Sila cuba lagi.'}</p>
+                        <i class="fa-solid fa-circle-exclamation text-amber-500 text-3xl mb-2"></i>
+                        <h4 class="font-bold text-amber-600 text-sm">Perhatian</h4>
+                        <p class="text-xs text-gray-600 mt-1">${result.message || "Gagal merekod kehadiran."}</p>
                     `;
                 }
             } catch (error) {
-                console.error("Ralat rekod kehadiran:", error);
+                console.error("Ralat imbasan kehadiran:", error);
                 document.getElementById('status-kotak').innerHTML = `
                     <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-2"></i>
                     <h4 class="font-bold text-red-600 text-sm">Ralat Sistem</h4>
-                    <p class="text-xs text-gray-500 mt-1">Gagal berhubung dengan pangkalan data.</p>
+                    <p class="text-xs text-gray-500 mt-1">Gagal berhubung dengan pelayan.</p>
                 `;
             }
         }
 
+        // Fungsi Tambahan Pengurusan Cuti
         function semakJenisCuti() {
             const jenis = document.getElementById('cutiJenis').value;
             const ruangSebab = document.getElementById('ruangSebabLain');
@@ -553,15 +557,15 @@
             }
         }
 
-        function hantarPermohonanCuti() {
+        async function hantarPermohonanCuti() {
             const empId = document.getElementById('cutiEmpId').value;
             const empName = document.getElementById('cutiEmpName').value;
-            const jenis = document.getElementById('cutiJenis').value;
+            const jenisCuti = document.getElementById('cutiJenis').value;
             const sebabLain = document.getElementById('cutiSebabLain').value;
-            const mula = document.getElementById('cutiMula').value;
-            const akhir = document.getElementById('cutiAkhir').value;
+            const tarikhMula = document.getElementById('cutiMula').value;
+            const tarikhAkhir = document.getElementById('cutiAkhir').value;
 
-            if (!empId || !empName || !mula || !akhir) {
+            if (!empId || !empName || !tarikhMula || !tarikhAkhir) {
                 alert("Sila lengkapkan maklumat permohonan cuti!");
                 return;
             }
@@ -570,122 +574,52 @@
                 type: "leave",
                 employeeId: empId,
                 employeeName: empName,
-                leaveType: jenis === 'Sebab Lain' ? sebabLain : jenis,
-                startDate: mula,
-                endDate: akhir
+                leaveType: jenisCuti === 'Sebab Lain' ? sebabLain : jenisCuti,
+                startDate: tarikhMula,
+                endDate: tarikhAkhir
             };
 
-            fetch(urlWebApps, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(result => {
+            try {
+                const response = await fetch(urlWebApps, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
                 if (result.result === "success") {
                     alert("Permohonan cuti berjaya dihantar!");
                     document.getElementById('leaveForm').reset();
                     muatTurunSenaraiCuti();
                 } else {
-                    alert("Gagal menghantar permohonan: " + (result.message || "Ralat"));
+                    alert("Gagal memohon cuti: " + (result.message || "Ralat"));
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error("Ralat cuti:", err);
-                alert("Gagal menghantar permohonan cuti.");
-            });
+                alert("Gagal berhubung dengan pelayan.");
+            }
         }
 
         function muatTurunSenaraiCuti() {
-            const tbody = document.getElementById('senarai-cuti-body');
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Sedang memuat turun data...</td></tr>`;
-
             fetch(`${urlWebApps}?action=leaves`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data && Array.isArray(data) && data.length > 0) {
-                        tbody.innerHTML = "";
-                        data.forEach(cuti => {
-                            let badgeStatus = `<span class="px-2 py-1 bg-amber-100 text-amber-800 rounded-full font-bold">Pending</span>`;
-                            if (cuti.status === 'Approved') badgeStatus = `<span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">Diluluskan</span>`;
-                            if (cuti.status === 'Rejected') badgeStatus = `<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full font-bold">Ditolak</span>`;
-
-                            let tr = document.createElement('tr');
-                            tr.className = "border-b border-gray-100 hover:bg-gray-50";
-                            tr.innerHTML = `
-                                <td class="p-3"><b>${cuti.employeeName}</b><br><span class="text-[10px] text-gray-400">${cuti.employeeId}</span></td>
-                                <td class="p-3">${cuti.leaveType}</td>
-                                <td class="p-3">${cuti.startDate} hingga ${cuti.endDate}</td>
-                                <td class="p-3 text-center space-y-1">
-                                    <div>${badgeStatus}</div>
-                                    ${cuti.status === 'Pending' ? `
-                                        <button onclick="tindakanAdminCuti('${cuti.rowId}', 'Approved')" class="text-emerald-600 hover:underline font-bold mr-2">Lulus</button>
-                                        <button onclick="tindakanAdminCuti('${cuti.rowId}', 'Rejected')" class="text-red-600 hover:underline font-bold">Tolak</button>
-                                    ` : ''}
-                                </td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    } else {
+                    const tbody = document.getElementById('senarai-cuti-body');
+                    if (!data || data.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Tiada rekod permohonan cuti.</td></tr>`;
+                        return;
                     }
+                    tbody.innerHTML = data.map(l => `
+                        <tr class="border-b border-gray-100">
+                            <td class="p-3"><b>${l.employeeName}</b><br><span class="text-gray-400">${l.employeeId}</span></td>
+                            <td class="p-3">${l.leaveType}</td>
+                            <td class="p-3">${l.startDate} hingga ${l.endDate}</td>
+                            <td class="p-3 text-center"><span class="px-2 py-1 bg-amber-100 text-amber-800 rounded font-bold">${l.status || 'Pending'}</span></td>
+                        </tr>
+                    `).join('');
                 })
                 .catch(err => {
-                    console.error("Gagal muat senarai cuti:", err);
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-400">Gagal memuat turun senarai cuti.</td></tr>`;
+                    console.log("Gagal muat senarai cuti:", err);
                 });
-        }
-
-        function tindakanAdminCuti(rowId, statusTindakan) {
-            tindakanTertunda = { rowId: rowId, status: statusTindakan };
-            document.getElementById('inputAdminPass').value = "";
-            document.getElementById('modal-admin').classList.remove('hidden');
-        }
-
-        function tutupModalAdmin() {
-            document.getElementById('modal-admin').classList.add('hidden');
-            tindakanTertunda = null;
-        }
-
-        function sahAdminLogin(event) {
-            event.preventDefault();
-            const pass = document.getElementById('inputAdminPass').value;
-
-            if (pass !== KATA_LALUAN_ADMIN) {
-                alert("Kata laluan admin salah!");
-                return;
-            }
-
-            document.getElementById('modal-admin').classList.add('hidden');
-
-            if (tindakanTertunda) {
-                const payload = {
-                    type: "updateLeaveStatus",
-                    rowId: tindakanTertunda.rowId,
-                    status: tindakanTertunda.status
-                };
-
-                fetch(urlWebApps, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                })
-                .then(res => res.json())
-                .then(result => {
-                    if (result.result === "success") {
-                        alert("Status cuti berjaya dikemas kini!");
-                        muatTurunSenaraiCuti();
-                    } else {
-                        alert("Gagal mengemas kini status.");
-                    }
-                    tindakanTertunda = null;
-                })
-                .catch(err => {
-                    console.error("Ralat kemas kini cuti:", err);
-                    alert("Gagal menyambung ke pelayan.");
-                    tindakanTertunda = null;
-                });
-            }
         }
     </script>
 </body>
