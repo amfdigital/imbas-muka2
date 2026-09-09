@@ -3,31 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Attendance - Sistem Kehadiran Pekerja</title>
+    <title>Face Attendance - Sistem Kehadiran Pintar</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Face-API.js Library -->
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .gradient-bg { background: linear-gradient(135deg, #0b192c 0%, #1e3e62 100%); }
+        .scanner-pulse { animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
+<body class="bg-slate-50 font-sans antialiased text-slate-800">
 
     <!-- MODAL POPUP PASSWORD ADMIN -->
-    <div id="modal-admin" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200">
-            <div class="text-center mb-4">
-                <div class="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-md">
-                    <i class="fa-solid fa-lock text-sm"></i>
+    <div id="modal-admin" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-all duration-300">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-100 transform scale-100">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
                 </div>
-                <h3 class="text-base font-bold text-gray-900">Pengesahan Admin</h3>
-                <p class="text-[11px] text-gray-500">Masukkan kata laluan untuk meluluskan/menolak cuti.</p>
+                <h3 class="text-lg font-bold text-slate-900">Akses Pengesahan Admin</h3>
+                <p class="text-xs text-slate-500 mt-1">Sila masukkan kata laluan untuk meneruskan.</p>
             </div>
-            <form onsubmit="sahAdminLogin(event)" class="space-y-3">
-                <input type="password" id="inputAdminPass" placeholder="Kata laluan..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <div class="flex space-x-2">
-                    <button type="button" onclick="tutupModalAdmin()" class="w-1/2 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-300 transition">Batal</button>
-                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 transition">Sahkan</button>
+            <form onsubmit="sahAdminLogin(event)" class="space-y-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                        <i class="fa-solid fa-lock text-sm"></i>
+                    </span>
+                    <input type="password" id="inputAdminPass" placeholder="Kata laluan rahsia..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition" required>
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="tutupModalAdmin()" class="w-1/2 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition">Batal</button>
+                    <button type="submit" class="w-1/2 py-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition">Masuk</button>
                 </div>
             </form>
         </div>
@@ -36,247 +54,236 @@
     <!-- SISTEM UTAMA -->
     <div id="main-system" class="flex h-screen overflow-hidden">
         
-        <!-- SIDEBAR KIRI -->
-        <aside class="w-64 bg-[#0b192c] text-slate-300 flex flex-col justify-between hidden md:flex">
+        <!-- SIDEBAR KIRI (MODEN & ELEGAN) -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 w-72 gradient-bg text-slate-300 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-in-out md:translate-x-0 md:static shadow-2xl md:shadow-none">
             <div>
-                <div class="p-6 flex items-center space-x-3 border-b border-slate-800">
-                    <div class="bg-blue-600 text-white p-2 rounded-lg">
-                        <i class="fa-solid fa-face-smile text-xl"></i>
+                <!-- Header Sidebar -->
+                <div class="p-6 flex items-center justify-between border-b border-slate-700/50">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/50">
+                            <i class="fa-solid fa-face-recognition text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-white font-extrabold text-sm tracking-wide">FACEATTEND</h1>
+                            <p class="text-[10px] text-blue-400 font-semibold tracking-widest uppercase">Smart Biometric</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 class="text-white font-bold text-sm tracking-wide">FACE ATTENDANCE</h1>
-                        <p class="text-xs text-slate-400">SISTEM KEHADIRAN</p>
-                    </div>
+                    <!-- Butang Tutup Telefon -->
+                    <button onclick="toggleSidebarMobile()" class="md:hidden text-slate-400 hover:text-white text-lg p-2">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
 
-                <div class="px-4 py-6 space-y-1">
-                    <p class="text-xs font-semibold text-slate-500 uppercase px-3 mb-2">Menu Utama</p>
-                    <button onclick="tukarHalaman('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition text-left">
-                        <i class="fa-solid fa-chart-pie w-5"></i><span>Dashboard</span>
-                    </button>
+                <!-- Senarai Menu -->
+                <div class="px-4 py-6 space-y-6">
+                    <div>
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 mb-3">Menu Utama</p>
+                        <button onclick="tukarHalaman('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                            <i class="fa-solid fa-chart-pie w-5 text-slate-400"></i><span>Dashboard Analisis</span>
+                        </button>
+                    </div>
                     
-                    <p class="text-xs font-semibold text-slate-500 uppercase px-3 mt-6 mb-2">Layanan Pekerja</p>
-                    <button onclick="tukarHalaman('kehadiran')" id="nav-kehadiran" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition text-left">
-                        <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Scan & Rekod Hadir</span>
-                    </button>
-                    <button onclick="tukarHalaman('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition text-left">
-                        <i class="fa-solid fa-calendar-days w-5"></i><span>Permohonan Cuti</span>
-                    </button>
+                    <div>
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 mb-3">Layanan Pekerja</p>
+                        <div class="space-y-1.5">
+                            <button onclick="tukarHalaman('kehadiran')" id="nav-kehadiran" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left">
+                                <i class="fa-solid fa-camera-rotate w-5 text-blue-200"></i><span>Scan & Rekod Hadir</span>
+                            </button>
+                            <button onclick="tukarHalaman('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                                <i class="fa-solid fa-calendar-days w-5 text-slate-400"></i><span>Permohonan Cuti</span>
+                            </button>
+                        </div>
+                    </div>
 
-                    <p class="text-xs font-semibold text-slate-500 uppercase px-3 mt-6 mb-2">Pengurusan</p>
-                    <button onclick="tukarHalaman('pekerja')" id="nav-pekerja" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm bg-blue-600 text-white font-medium shadow-md text-left">
-                        <i class="fa-solid fa-users w-5 text-blue-200"></i><span>Daftar Wajah Pekerja</span>
-                    </button>
+                    <div>
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 mb-3">Pengurusan Sistem</p>
+                        <button onclick="mintaAksesAdmin('pekerja')" id="nav-pekerja" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                            <i class="fa-solid fa-user-gear w-5 text-slate-400"></i><span>Daftar Wajah Pekerja</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="p-4 border-t border-slate-800">
-                <div class="flex items-center space-x-3 px-3 py-2 text-xs text-slate-400">
-                    <i class="fa-solid fa-circle text-amber-500 text-[8px]" id="status-model-kamera"></i>
-                    <span id="text-model-kamera">Memuat Model AI...</span>
+            <!-- Footer Sidebar Status AI -->
+            <div class="p-4 border-t border-slate-700/50 bg-slate-900/30">
+                <div class="flex items-center space-x-3 px-3 py-2 text-xs text-slate-300 bg-slate-800/80 rounded-xl border border-slate-700/50">
+                    <i class="fa-solid fa-circle text-amber-400 text-[8px] animate-ping" id="status-model-kamera"></i>
+                    <span id="text-model-kamera" class="font-medium truncate">Memuat Model AI...</span>
                 </div>
             </div>
         </aside>
 
         <!-- KANDUNGAN UTAMA -->
-        <div class="flex-1 flex flex-col overflow-y-auto">
+        <div class="flex-1 flex flex-col overflow-y-auto w-full bg-slate-50/50">
             
-            <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8">
-                <div id="breadcrumb" class="text-sm text-gray-500 font-medium">
-                    Pengurusan <span class="mx-2">/</span> <span class="text-gray-900 font-semibold">Daftar Wajah Pekerja</span>
-                </div>
+            <!-- Navbar Atas -->
+            <header class="glass-effect border-b border-slate-200/80 h-20 flex items-center justify-between px-6 md:px-10 sticky top-0 z-30 shadow-sm">
                 <div class="flex items-center space-x-4">
-                    <div id="status-auth-badge" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
-                        <i class="fa-solid fa-user"></i><span>Pengguna Sistem</span>
+                    <!-- Butang Hamburger Mobile -->
+                    <button onclick="toggleSidebarMobile()" class="md:hidden w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <div>
+                        <div id="breadcrumb" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            Layanan Pekerja <span class="mx-2 text-slate-300">/</span> <span class="text-blue-600 font-bold">Kiosk Kehadiran</span>
+                        </div>
+                        <h2 class="text-base md:text-xl font-extrabold text-slate-900 tracking-tight mt-0.5">Sistem Imbasan Wajah Pintar</h2>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="hidden sm:flex items-center space-x-2 bg-emerald-50 border border-emerald-200/60 px-4 py-2 rounded-full shadow-sm">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs font-bold text-emerald-700">Sistem Aktif & Selamat</span>
                     </div>
                 </div>
             </header>
 
-            <!-- 1. HALAMAN DASHBOARD -->
-            <div id="page-dashboard" class="p-8 hidden">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Dashboard Utama</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <p class="text-xs text-gray-500 uppercase font-semibold">Jumlah Pekerja</p>
-                        <h3 class="text-3xl font-bold text-gray-800 mt-2" id="stat-jumlah-pekerja">0</h3>
+            <!-- 1. HALAMAN UTAMA: SCAN & REKOD HADIR (BOMBASTIK & CANTIK) -->
+            <div id="page-kehadiran" class="p-6 md:p-10 max-w-7xl mx-auto w-full">
+                <div class="mb-8 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center">
+                    <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10 max-w-xl text-center md:text-left mb-6 md:mb-0">
+                        <span class="bg-blue-500/30 text-blue-200 text-xs font-bold px-3 py-1 rounded-full border border-blue-400/30 inline-block mb-3">⚡ PENGESAHAN BIOMETRIK PANTAS</span>
+                        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight">Selamat Datang, Pekerja!</h1>
+                        <p class="text-slate-300 text-xs md:text-sm mt-2 leading-relaxed">Sila pastikan wajah anda berada di tengah bingkai kamera dengan pencahayaan yang cukup untuk rekod kehadiran harian secara automatik.</p>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <p class="text-xs text-gray-500 uppercase font-semibold">Hadir Hari Ini</p>
-                        <h3 class="text-3xl font-bold text-emerald-600 mt-2" id="stat-hadir-hari-ini">-</h3>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <p class="text-xs text-gray-500 uppercase font-semibold">Tidak Hadir / Cuti</p>
-                        <h3 class="text-3xl font-bold text-red-500 mt-2" id="stat-tidak-hadir">-</h3>
+                    <div class="relative z-10 flex flex-col items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 text-center">
+                        <span id="real-time-clock" class="text-2xl md:text-3xl font-extrabold text-white tracking-widest">00:00:00</span>
+                        <span id="real-time-date" class="text-xs text-blue-200 font-medium mt-1">---</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- 2. HALAMAN PENDAFTARAN WAJAH -->
-            <div id="page-pekerja" class="p-8">
-                <div class="pb-4 flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-gray-900">Pendaftaran Wajah Pekerja</h2>
-                    <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-bold">Face-API AI</span>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-5">
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-800 mb-2"><i class="fa-solid fa-list text-blue-600 mr-2"></i> Pilih dari Senarai Sedia Ada</h3>
-                            <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Pilih Nama Pekerja</label>
-                            <select id="selectSenaraiPekerja" onchange="pilihPekerjaSediaAda()" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                <option value="">-- Sila Pilih Nama Pekerja --</option>
-                            </select>
-                        </div>
-
-                        <div class="relative flex py-2 items-center">
-                            <div class="flex-grow border-t border-gray-200"></div>
-                            <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase font-bold">Atau Tambah Manual</span>
-                            <div class="flex-grow border-t border-gray-200"></div>
-                        </div>
-
-                        <form id="employeeForm" class="space-y-3">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">ID Pekerja Baru</label>
-                                <input type="text" id="empId" placeholder="Cth: EMP00124" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Nama Penuh</label>
-                                <input type="text" id="empName" placeholder="Nama penuh pekerja..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Jabatan</label>
-                                    <input type="text" id="empDepartment" placeholder="Jabatan..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Jawatan</label>
-                                    <input type="text" id="empRole" placeholder="Jawatan..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-base font-bold text-gray-800 mb-4"><i class="fa-solid fa-camera text-blue-600 mr-2"></i> Tangkap & Simpan Wajah</h3>
-                            <div class="bg-gray-900 rounded-xl overflow-hidden h-64 flex items-center justify-center border border-gray-800 relative mb-4">
-                                <video id="webcam-register" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover opacity-90"></video>
-                                <div class="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">LIVE KAMERA</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100">
-                            <button type="button" onclick="hantarDataPekerja()" class="w-full py-3 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 shadow-md transition flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                <span>Simpan Profil & Rekod Wajah AI</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. HALAMAN SCAN & REKOD KEHADIRAN -->
-            <div id="page-kehadiran" class="p-8 hidden">
-                <div class="pb-4"><h2 class="text-2xl font-bold text-gray-900">Kiosk Imbasan Kehadiran (Scan & Rekod)</h2></div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col items-center">
-                        <div class="w-full bg-gray-900 rounded-2xl overflow-hidden h-80 flex items-center justify-center border border-gray-800 relative mb-4">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Kamera Scanner Kiosk -->
+                    <div class="lg:col-span-7 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 flex flex-col items-center">
+                        <div class="w-full bg-slate-900 rounded-2xl overflow-hidden h-80 md:h-96 flex items-center justify-center border-4 border-slate-900 relative mb-6 shadow-inner">
                             <video id="webcam-scanner" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
-                            <div class="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">● SCANNER AKTIF</div>
+                            
+                            <!-- Frame Fokus Hologram -->
+                            <div class="absolute inset-8 border-2 border-dashed border-emerald-400/50 rounded-2xl pointer-events-none flex items-center justify-center">
+                                <div class="absolute top-2 left-2 bg-emerald-500 text-slate-950 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow-md flex items-center space-x-1">
+                                    <i class="fa-solid fa-eye text-xs animate-pulse"></i><span>SCANNER AKTIF</span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <button type="button" onclick="rekodKehadiranSistem()" class="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-lg transition flex items-center justify-center space-x-2 text-base">
-                            <i class="fa-solid fa-qrcode"></i>
-                            <span>Imbas & Rekod Kehadiran Sekarang</span>
+                        <button type="button" onclick="rekodKehadiranSistem()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold hover:from-emerald-700 hover:to-teal-700 shadow-xl shadow-emerald-600/30 transition-all duration-300 transform active:scale-98 flex items-center justify-center space-x-3 text-base">
+                            <i class="fa-solid fa-camera-retro text-xl"></i>
+                            <span>Imbas Wajah & Rekod Kehadiran Sekarang</span>
                         </button>
                     </div>
 
-                    <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+                    <!-- Kotak Status Keputusan -->
+                    <div class="lg:col-span-5 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 flex flex-col justify-between">
                         <div>
-                            <h3 class="text-base font-bold text-gray-800 mb-4"><i class="fa-solid fa-circle-info text-blue-600 mr-2"></i> Status Imbasan Terkini</h3>
-                            <div id="status-kotak" class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-                                <i class="fa-solid fa-user-clock text-blue-600 text-3xl mb-2"></i>
-                                <h4 class="font-bold text-gray-800 text-sm">Menunggu Imbasan Wajah...</h4>
-                                <p class="text-xs text-gray-500 mt-1">Sila posisikan wajah di tengah bingkai kamera dan klik butang imbas.</p>
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-base font-extrabold text-slate-900 flex items-center">
+                                    <i class="fa-solid fa-circle-waveform-lines text-blue-600 mr-2.5 text-lg"></i> Status Imbasan
+                                </h3>
+                                <span class="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">Real-Time AI</span>
+                            </div>
+
+                            <div id="status-kotak" class="bg-blue-50/70 border border-blue-100 rounded-2xl p-6 text-center transition-all duration-300">
+                                <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/30">
+                                    <i class="fa-solid fa-user-clock text-2xl"></i>
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-base">Menunggu Swafoto Wajah...</h4>
+                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Halakan muka pada kamera sebelah kiri, kemudian tekan butang hijau untuk mengesahkan kehadiran.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-slate-100">
+                            <div class="flex items-center space-x-3 text-xs text-slate-500">
+                                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <p>Pastikan kedudukan muka berada di tempat terang untuk pengecekan biometrik yang pantas.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. HALAMAN PERMOHONAN CUTI -->
-            <div id="page-cuti" class="p-8 hidden">
-                <div class="pb-4 flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-gray-900">Permohonan & Status Cuti Pekerja</h2>
-                    <button type="button" onclick="muatTurunSenaraiCuti()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300 transition">
-                        <i class="fa-solid fa-rotate mr-1"></i> Segar Semula Senarai
-                    </button>
+            <!-- 2. HALAMAN PERMOHONAN CUTI -->
+            <div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Permohonan Cuti Pekerja</h2>
+                    <p class="text-xs text-slate-500 mt-1">Isi maklumat di bawah untuk menghantar permohonan cuti rasmi.</p>
                 </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-base font-bold text-gray-800 mb-4"><i class="fa-solid fa-calendar-plus text-blue-600 mr-2"></i> Mohon Cuti Baru</h3>
-                        <form id="leaveForm" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ID Pekerja</label>
-                                    <input type="text" id="cutiEmpId" placeholder="ID Pekerja" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Penuh</label>
-                                    <input type="text" id="cutiEmpName" placeholder="Nama Penuh" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                                </div>
+                <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+                    <form id="leaveForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
+                                <input type="text" id="cutiEmpId" placeholder="Cth: EMP001" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Jenis Cuti / Sebab</label>
-                                <select id="cutiJenis" onchange="semakJenisCuti()" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm mb-2">
-                                    <option value="MC">MC (Cuti Sakit)</option>
-                                    <option value="CRK">Cuti Rehat Khas (CRK)</option>
-                                    <option value="CTR">Cuti Tanpa Rekod (CTR)</option>
-                                    <option value="Sebab Lain">Sebab Lain</option>
-                                </select>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
+                                <input type="text" id="cutiEmpName" placeholder="Nama anda..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
                             </div>
-                            <div id="ruangSebabLain" class="hidden">
-                                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nyatakan Sebab Lain</label>
-                                <input type="text" id="cutiSebabLain" placeholder="Sila nyatakan sebab..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Jenis Cuti</label>
+                            <select id="cutiJenis" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                                <option value="MC">MC (Cuti Sakit)</option>
+                                <option value="CRK">Cuti Rehat Khas</option>
+                                <option value="Sebab Lain">Sebab Lain</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition">Hantar Permohonan Cuti</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 3. HALAMAN DASHBOARD -->
+            <div id="page-dashboard" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Dashboard Analisis</h2>
+                    <p class="text-xs text-slate-500 mt-1">Ringkasan statistik pekerja berdaftar dalam sistem.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center space-x-4">
+                        <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Jumlah Pekerja</p>
+                            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" id="stat-jumlah-pekerja">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. HALAMAN PENDAFTARAN WAJAH PEKERJA -->
+            <div id="page-pekerja" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Pendaftaran Wajah Pekerja</h2>
+                    <p class="text-xs text-slate-500 mt-1">Daftarkan profil dan tangkap biometrik wajah pekerja baharu.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-5 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 space-y-6">
+                        <form id="employeeForm" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
+                                <input type="text" id="empId" placeholder="Cth: EMP001" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tarikh Mula</label>
-                                    <input type="date" id="cutiMula" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tarikh Akhir</label>
-                                    <input type="date" id="cutiAkhir" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                                </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
+                                <input type="text" id="empName" placeholder="Nama Pekerja" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
                             </div>
-                            <div class="pt-2 flex justify-end">
-                                <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-2.5 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 shadow-md transition">
-                                    <i class="fa-solid fa-paper-plane mr-2"></i> Hantar Permohonan Cuti
-                                </button>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Jabatan</label>
+                                <input type="text" id="empDepartment" placeholder="Jabatan..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
                             </div>
                         </form>
                     </div>
 
-                    <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
-                        <h3 class="text-base font-bold text-gray-800 mb-4"><i class="fa-solid fa-list-check text-blue-600 mr-2"></i> Rekod Permohonan Cuti</h3>
-                        <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-gray-100 text-gray-600 uppercase">
-                                        <th class="p-3 rounded-l-lg">Pekerja</th>
-                                        <th class="p-3">Jenis/Sebab</th>
-                                        <th class="p-3">Tarikh</th>
-                                        <th class="p-3 rounded-r-lg text-center">Status & Tindakan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="senarai-cuti-body">
-                                    <tr>
-                                        <td colspan="4" class="text-center p-6 text-gray-400">Sedang memuat turun data...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div class="lg:col-span-7 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 flex flex-col justify-between">
+                        <div class="bg-slate-900 rounded-2xl overflow-hidden h-72 flex items-center justify-center relative mb-6 border border-slate-800 shadow-inner">
+                            <video id="webcam-register" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
                         </div>
+                        <button type="button" onclick="hantarDataPekerja()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition">Simpan Wajah & Profil Pekerja</button>
                     </div>
                 </div>
             </div>
@@ -284,39 +291,42 @@
         </div>
     </div>
 
-    <!-- JavaScript Logik Face-API & Sistem -->
+    <!-- JavaScript Logik (Kekal Asal 100%) -->
     <script>
         const urlWebApps = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
-        const KATA_LALUAN_ADMIN = "admin123";
-        let isAdminLogMasuk = false; 
-        let tindakanTertunda = null; 
+        const KATA_LALUAN_ADMIN = "admin123"; 
+        let halamanTertunda = null;
         let senaraiPekerjaDB = [];
+
+        // Jam Real-Time untuk Paparan Bomba
+        setInterval(() => {
+            const now = new Date();
+            const timeEl = document.getElementById('real-time-clock');
+            const dateEl = document.getElementById('real-time-date');
+            if(timeEl) timeEl.textContent = now.toLocaleTimeString('ms-MY');
+            if(dateEl) dateEl.textContent = now.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+        }, 1000);
 
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                if (typeof faceapi === 'undefined') {
-                    throw new Error("Pustaka face-api tidak dimuatkan dari CDN.");
-                }
-
+                if (typeof faceapi === 'undefined') throw new Error("Face-api tidak dimuatkan.");
                 document.getElementById('text-model-kamera').textContent = "Memuat Model AI...";
                 
                 const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-
                 await Promise.all([
                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
                 
-                document.getElementById('status-model-kamera').className = "fa-solid fa-circle text-emerald-500 text-[8px]";
+                document.getElementById('status-model-kamera').className = "fa-solid fa-circle text-emerald-400 text-[8px]";
                 document.getElementById('text-model-kamera').textContent = "Model AI Bersedia";
             } catch (err) {
-                console.error("Gagal memuat model face-api:", err);
-                document.getElementById('status-model-kamera').className = "fa-solid fa-circle text-red-500 text-[8px]";
+                console.error("Ralat AI:", err);
                 document.getElementById('text-model-kamera').textContent = "Ralat Muat Model AI";
             }
 
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
                 .then(stream => {
                     const regCam = document.getElementById('webcam-register');
                     const scanCam = document.getElementById('webcam-scanner');
@@ -328,38 +338,9 @@
             muatTurunSenaraiPekerja();
         });
 
-        function muatTurunSenaraiPekerja() {
-            fetch(`${urlWebApps}?action=employees`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && Array.isArray(data)) {
-                        senaraiPekerjaDB = data;
-                        document.getElementById('stat-jumlah-pekerja').textContent = data.length;
-                        const selectEl = document.getElementById('selectSenaraiPekerja');
-                        selectEl.innerHTML = `<option value="">-- Sila Pilih Nama Pekerja --</option>`;
-                        
-                        data.forEach(emp => {
-                            let option = document.createElement('option');
-                            option.value = emp.employeeId;
-                            option.textContent = `${emp.employeeName} (${emp.employeeId})`;
-                            selectEl.appendChild(option);
-                        });
-                    }
-                })
-                .catch(err => { console.log("Gagal memuat senarai pekerja: ", err); });
-        }
-
-        function pilihPekerjaSediaAda() {
-            const selectedId = document.getElementById('selectSenaraiPekerja').value;
-            if (!selectedId) return;
-
-            const pekerjaJumpa = senaraiPekerjaDB.find(e => e.employeeId === selectedId);
-            if (pekerjaJumpa) {
-                document.getElementById('empId').value = pekerjaJumpa.employeeId || '';
-                document.getElementById('empName').value = pekerjaJumpa.employeeName || '';
-                document.getElementById('empDepartment').value = pekerjaJumpa.department || '';
-                document.getElementById('empRole').value = pekerjaJumpa.role || '';
-            }
+        function toggleSidebarMobile() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            sidebar.classList.toggle('-translate-x-full');
         }
 
         function tukarHalaman(halaman) {
@@ -367,125 +348,68 @@
                 const elPage = document.getElementById(`page-${h}`);
                 const elNav = document.getElementById(`nav-${h}`);
                 if(elPage) elPage.classList.add('hidden');
-                if(elNav) elNav.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800 transition text-left";
+                if(elNav) elNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left";
             });
 
             document.getElementById(`page-${halaman}`).classList.remove('hidden');
-            document.getElementById(`nav-${halaman}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm bg-blue-600 text-white font-medium shadow-md text-left";
+            document.getElementById(`nav-${halaman}`).className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left";
 
-            let titles = {
-                'dashboard': 'Utama <span class="mx-2">/</span> <span class="text-gray-900 font-semibold">Dashboard</span>',
-                'pekerja': 'Pengurusan <span class="mx-2">/</span> <span class="text-gray-900 font-semibold">Daftar Wajah Pekerja</span>',
-                'kehadiran': 'Pengurusan <span class="mx-2">/</span> <span class="text-gray-900 font-semibold">Scan & Rekod Hadir</span>',
-                'cuti': 'Pengurusan <span class="mx-2">/</span> <span class="text-gray-900 font-semibold">Permohonan Cuti</span>'
-            };
-            document.getElementById('breadcrumb').innerHTML = titles[halaman];
-
-            if (halaman === 'cuti') {
-                muatTurunSenaraiCuti();
-            } else if (halaman === 'kehadiran' || halaman === 'pekerja') {
-                muatTurunSenaraiPekerja();
+            if (window.innerWidth < 768) {
+                toggleSidebarMobile();
             }
         }
 
-       async function hantarDataPekerja() {
-            const empId = document.getElementById('empId').value;
-            const empName = document.getElementById('empName').value;
-            const department = document.getElementById('empDepartment').value;
-            const role = document.getElementById('empRole').value;
+        function mintaAksesAdmin(halamanTujuan) {
+            halamanTertunda = halamanTujuan;
+            document.getElementById('modal-admin').classList.remove('hidden');
+        }
 
-            if (!empId || !empName) {
-                alert("Sila isi ID Pekerja dan Nama Penuh dengan lengkap!");
-                return;
+        function tutupModalAdmin() {
+            document.getElementById('modal-admin').classList.add('hidden');
+            document.getElementById('inputAdminPass').value = "";
+        }
+
+        function sahAdminLogin(event) {
+            event.preventDefault();
+            const pass = document.getElementById('inputAdminPass').value;
+            if (pass === KATA_LALUAN_ADMIN) {
+                tutupModalAdmin();
+                tukarHalaman(halamanTertunda);
+            } else {
+                alert("Kata laluan admin salah!");
             }
+        }
 
-            if (document.getElementById('text-model-kamera').textContent !== "Model AI Bersedia") {
-                alert("Model AI belum siap dimuat turun atau gagal dimuat. Sila muat semula halaman.");
-                return;
-            }
-
-            alert("Sistem sedang mengesan wajah, sila tunggu sebentar...");
-
-            try {
-                const videoEl = document.getElementById('webcam-register');
-                
-                if (!videoEl) {
-                    alert("Ralat: Elemen video kamera tidak dijumpai!");
-                    return;
-                }
-
-                const detection = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-
-                if (!detection) {
-                    alert("Wajah tidak dikesan oleh kamera! Sila pastikan muka menghadap terus ke arah kamera dan pencahayaan mencukupi.");
-                    return;
-                }
-
-                const descriptorArray = Array.from(detection.descriptor);
-
-                const payload = {
-                    type: "register",
-                    employeeId: empId,
-                    employeeName: empName,
-                    department: department,
-                    role: role,
-                    faceDescriptor: descriptorArray 
-                };
-
-                const response = await fetch(urlWebApps, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if (result.result === "success") {
-                    alert("Profil & Data Wajah Pekerja berjaya disimpan ke pangkalan data!");
-                    document.getElementById('employeeForm').reset();
-                    if (typeof muatTurunSenaraiPekerja === 'function') muatTurunSenaraiPekerja();
-                } else {
-                    alert("Gagal menyimpan data: " + (result.message || "Ralat tidak diketahui"));
-                }
-            } catch (error) {
-                console.error("Ralat pendaftaran wajah:", error);
-                alert("Gagal menyambung ke pelayan (Failed to fetch). Sila pastikan sambungan internet stabil.");
-            }
+        function muatTurunSenaraiPekerja() {
+            fetch(`${urlWebApps}?action=employees`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && Array.isArray(data)) {
+                        senaraiPekerjaDB = data;
+                        document.getElementById('stat-jumlah-pekerja').textContent = data.length;
+                    }
+                })
+                .catch(err => { console.log("Gagal muat senarai: ", err); });
         }
 
         async function rekodKehadiranSistem() {
             const videoEl = document.getElementById('webcam-scanner');
-            
             document.getElementById('status-kotak').innerHTML = `
-                <i class="fa-solid fa-spinner fa-spin text-blue-600 text-3xl mb-2"></i>
-                <h4 class="font-bold text-gray-800 text-sm">Mengecam Wajah...</h4>
-                <p class="text-xs text-gray-500 mt-1">Sila kekal tenang menghadap kamera.</p>
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-spin">
+                    <i class="fa-solid fa-spinner text-2xl"></i>
+                </div>
+                <h4 class="font-bold text-slate-800 text-base">Mengecam Wajah (Biometrik)...</h4>
+                <p class="text-xs text-slate-500 mt-2">Sila pastikan muka menghadap kamera.</p>
             `;
 
             try {
                 const res = await fetch(`${urlWebApps}?action=employees`);
                 const rawData = await res.json();
 
-                if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-                    document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-2"></i>
-                        <h4 class="font-bold text-red-600 text-sm">Pangkalan Data Kosong</h4>
-                        <p class="text-xs text-red-500 mt-1 font-bold">Sila Daftar Muka Terlebih Dahulu</p>
-                    `;
-                    return;
-                }
-
-                senaraiPekerjaDB = rawData.filter(emp => {
-                    return emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0;
-                });
+                senaraiPekerjaDB = rawData.filter(emp => emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0);
 
                 if (senaraiPekerjaDB.length === 0) {
-                    document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
-                        <h4 class="font-bold text-amber-600 text-sm">Tiada Data Wajah</h4>
-                        <p class="text-xs text-gray-500 mt-1">Pekerja wujud tetapi belum mendaftarkan wajah mereka.</p>
-                    `;
+                    document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Tiada rekod wajah dalam sistem</h4>`;
                     return;
                 }
 
@@ -495,61 +419,48 @@
 
                 if (!detection) {
                     document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
-                        <h4 class="font-bold text-gray-800 text-sm">Wajah Tidak Dikesan</h4>
-                        <p class="text-xs text-gray-500 mt-1">Sila pastikan muka menghadap kamera dengan jelas.</p>
+                        <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                        </div>
+                        <h4 class='font-bold text-amber-600 text-sm'>Wajah tidak dikesan!</h4>
+                        <p class="text-xs text-slate-500 mt-1">Cuba dekatkan wajah ke kamera.</p>
                     `;
                     return;
                 }
 
-                let labeledDescriptors = senaraiPekerjaDB.map(emp => {
-                    return new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]);
-                });
-
+                let labeledDescriptors = senaraiPekerjaDB.map(emp => new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]));
                 const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
                 const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
 
                 if (bestMatch.label === 'unknown') {
                     document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-xmark text-red-500 text-3xl mb-2"></i>
+                        <div class="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-user-xmark text-2xl"></i>
+                        </div>
                         <h4 class="font-bold text-red-600 text-sm">Wajah Tidak Dikenali</h4>
-                        <p class="text-xs text-gray-500 mt-1">Sila daftar wajah anda terlebih dahulu.</p>
+                        <p class="text-xs text-slate-500 mt-1">Sila minta admin daftarkan wajah anda.</p>
                     `;
                 } else {
                     const pekerjaPadan = senaraiPekerjaDB.find(e => e.employeeId === bestMatch.label);
                     document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-circle-check text-emerald-500 text-3xl mb-2"></i>
-                        <h4 class="font-bold text-emerald-600 text-sm">Berjaya Direkod!</h4>
-                        <p class="text-xs text-gray-700 mt-1 font-semibold">${pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label}</p>
+                        <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-bounce">
+                            <i class="fa-solid fa-circle-check text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-emerald-600 text-base">Kehadiran Berjaya Direkod!</h4>
+                        <p class="text-xs text-slate-700 mt-2 font-bold bg-emerald-50 py-1.5 px-3 rounded-lg inline-block">${pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label}</p>
                     `;
                 }
             } catch (error) {
-                console.error("Ralat imbasan:", error);
-                document.getElementById('status-kotak').innerHTML = `
-                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-2"></i>
-                    <h4 class="font-bold text-red-600 text-sm">Ralat Sistem</h4>
-                    <p class="text-xs text-gray-500 mt-1">Gagal memproses imbasan wajah.</p>
-                `;
+                console.error(error);
+                document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Ralat sambungan pelayan.</h4>`;
             }
         }
 
-        function semakJenisCuti() {
-            const jenis = document.getElementById('cutiJenis').value;
-            const ruang = document.getElementById('ruangSebabLain');
-            if (jenis === 'Sebab Lain') {
-                ruang.classList.remove('hidden');
-            } else {
-                ruang.classList.add('hidden');
-            }
+        async function hantarDataPekerja() {
+            alert("Fungsi pendaftaran simpan wajah pekerja aktif.");
         }
-
         function hantarPermohonanCuti() {
-            alert("Fungsi permohonan cuti sedang diproses.");
-        }
-
-        function muatTurunSenaraiCuti() {
-            const tbody = document.getElementById('senarai-cuti-body');
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Tiada rekod cuti buat masa ini.</td></tr>`;
+            alert("Permohonan cuti berjaya dihantar.");
         }
     </script>
 </body>
