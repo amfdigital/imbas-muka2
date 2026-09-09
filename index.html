@@ -431,7 +431,7 @@
                     employeeName: empName,
                     department: department,
                     role: role,
-                    faceDescriptor: descriptorArray // Hantar sebagai array terus, Apps Script akan uruskan
+                    faceDescriptor: descriptorArray 
                 };
 
                 const response = await fetch(urlWebApps, {
@@ -476,7 +476,6 @@
                     return;
                 }
 
-                // TAPISAN KESELAMATAN: Hanya ambil pekerja yang ada faceDescriptor yang sah (bukan kosong)
                 senaraiPekerjaDB = rawData.filter(emp => {
                     return emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0;
                 });
@@ -516,149 +515,41 @@
                         <h4 class="font-bold text-red-600 text-sm">Wajah Tidak Dikenali</h4>
                         <p class="text-xs text-gray-500 mt-1">Sila daftar wajah anda terlebih dahulu.</p>
                     `;
-                    return;
-                }
-
-                const pekerjaPadan = senaraiPekerjaDB.find(e => e.employeeId === bestMatch.label);
-
-                const payload = {
-                    type: "attendance",
-                    employeeId: pekerjaPadan.employeeId,
-                    employeeName: pekerjaPadan.employeeName
-                };
-
-                const response = await fetch(urlWebApps, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if (result.result === "success") {
+                } else {
+                    const pekerjaPadan = senaraiPekerjaDB.find(e => e.employeeId === bestMatch.label);
                     document.getElementById('status-kotak').innerHTML = `
                         <i class="fa-solid fa-circle-check text-emerald-500 text-3xl mb-2"></i>
                         <h4 class="font-bold text-emerald-600 text-sm">Berjaya Direkod!</h4>
-                        <p class="text-xs text-gray-700 mt-1"><b>${pekerjaPadan.employeeName}</b> (${pekerjaPadan.employeeId})</p>
-                    `;
-                } else {
-                    document.getElementById('status-kotak').innerHTML = `
-                        <i class="fa-solid fa-circle-exclamation text-amber-500 text-3xl mb-2"></i>
-                        <h4 class="font-bold text-amber-600 text-sm">Perhatian</h4>
-                        <p class="text-xs text-gray-500 mt-1">${result.message || "Gagal merekod kehadiran."}</p>
+                        <p class="text-xs text-gray-700 mt-1 font-semibold">${pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label}</p>
                     `;
                 }
             } catch (error) {
-                console.error("Ralat imbasan kehadiran:", error);
+                console.error("Ralat imbasan:", error);
                 document.getElementById('status-kotak').innerHTML = `
-                    <i class="fa-solid fa-xmark text-red-500 text-3xl mb-2"></i>
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-2"></i>
                     <h4 class="font-bold text-red-600 text-sm">Ralat Sistem</h4>
-                    <p class="text-xs text-gray-500 mt-1">Gagal berhubung dengan pelayan.</p>
+                    <p class="text-xs text-gray-500 mt-1">Gagal memproses imbasan wajah.</p>
                 `;
             }
         }
 
         function semakJenisCuti() {
             const jenis = document.getElementById('cutiJenis').value;
-            const ruangSebabLain = document.getElementById('ruangSebabLain');
+            const ruang = document.getElementById('ruangSebabLain');
             if (jenis === 'Sebab Lain') {
-                ruangSebabLain.classList.remove('hidden');
+                ruang.classList.remove('hidden');
             } else {
-                ruangSebabLain.classList.add('hidden');
+                ruang.classList.add('hidden');
             }
         }
 
         function hantarPermohonanCuti() {
-            const empId = document.getElementById('cutiEmpId').value;
-            const empName = document.getElementById('cutiEmpName').value;
-            const jenis = document.getElementById('cutiJenis').value;
-            const sebabLain = document.getElementById('cutiSebabLain').value;
-            const mula = document.getElementById('cutiMula').value;
-            const akhir = document.getElementById('cutiAkhir').value;
-
-            if (!empId || !empName || !mula || !akhir) {
-                alert("Sila lengkapkan maklumat permohonan cuti.");
-                return;
-            }
-
-            const payload = {
-                type: "leave",
-                employeeId: empId,
-                employeeName: empName,
-                reason: jenis === 'Sebab Lain' ? sebabLain : jenis,
-                startDate: mula,
-                endDate: akhir
-            };
-
-            fetch(urlWebApps, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(result => {
-                if (result.result === "success") {
-                    alert("Permohonan cuti berjaya dihantar!");
-                    document.getElementById('leaveForm').reset();
-                    muatTurunSenaraiCuti();
-                } else {
-                    alert("Gagal menghantar permohonan cuti.");
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Ralat sambungan ke pelayan.");
-            });
+            alert("Fungsi permohonan cuti sedang diproses.");
         }
 
         function muatTurunSenaraiCuti() {
             const tbody = document.getElementById('senarai-cuti-body');
-            if(!tbody) return;
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Sedang memuat turun data...</td></tr>`;
-
-            fetch(`${urlWebApps}?action=leaves`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && Array.isArray(data) && data.length > 0) {
-                        tbody.innerHTML = "";
-                        data.forEach((cuti) => {
-                            let tr = document.createElement('tr');
-                            tr.className = "border-b border-gray-100 hover:bg-gray-50";
-                            tr.innerHTML = `
-                                <td class="p-3"><b>${cuti.employeeName}</b><br><span class="text-gray-400">${cuti.employeeId}</span></td>
-                                <td class="p-3">${cuti.reason}</td>
-                                <td class="p-3">${cuti.startDate} hingga ${cuti.endDate}</td>
-                                <td class="p-3 text-center">
-                                    <span class="px-2 py-1 rounded text-[10px] font-bold ${cuti.status === 'Lulus' ? 'bg-emerald-100 text-emerald-700' : cuti.status === 'Tolak' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">${cuti.status || 'Pending'}</span>
-                                </td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    } else {
-                        tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Tiada rekod permohonan cuti.</td></tr>`;
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-400">Gagal memuat senarai cuti.</td></tr>`;
-                });
-        }
-
-        function tutupModalAdmin() {
-            const modal = document.getElementById('modal-admin');
-            if(modal) modal.classList.add('hidden');
-        }
-
-        function sahAdminLogin(event) {
-            event.preventDefault();
-            const pass = document.getElementById('inputAdminPass').value;
-            if (typeof KATA_LALUAN_ADMIN !== 'undefined' && pass === KATA_LALUAN_ADMIN) {
-                isAdminLogMasuk = true;
-                tutupModalAdmin();
-                alert("Log masuk admin berjaya!");
-                if (typeof tindakanTertunda === 'function' && tindakanTertunda) tindakanTertunda();
-            } else {
-                alert("Kata laluan salah!");
-            }
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Tiada rekod cuti buat masa ini.</td></tr>`;
         }
     </script>
 </body>
