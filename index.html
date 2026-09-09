@@ -80,11 +80,9 @@
                             <button onclick="tukarHalaman('kehadiran')" id="nav-kehadiran" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left">
                                 <i class="fa-solid fa-camera-rotate w-5 text-blue-200"></i><span>Scan & Rekod Hadir</span>
                             </button>
-                            <!-- Borang Cuti Bebas Diisi Tanpa Password -->
                             <button onclick="tukarHalaman('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
                                 <i class="fa-solid fa-calendar-days w-5 text-slate-400"></i><span>Permohonan Cuti</span>
                             </button>
-                            <!-- Panel Kelulusan Cuti Dikunci Admin -->
                             <button onclick="mintaAksesAdmin('kelulusan')" id="nav-kelulusan" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
                                 <i class="fa-solid fa-clipboard-check w-5 text-slate-400"></i><span>Kelulusan Cuti (Admin) <i class="fa-solid fa-lock text-[10px] ml-auto text-amber-400"></i></span>
                             </button>
@@ -130,7 +128,7 @@
                 <div class="mb-8 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center">
                     <div class="relative z-10 max-w-xl text-center md:text-left mb-6 md:mb-0">
                         <span class="bg-blue-500/30 text-blue-200 text-xs font-bold px-3 py-1 rounded-full border border-blue-400/30 inline-block mb-3">⚡ PENGESAHAN BIOMETRIK PANTAS</span>
-                        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight">Selamat Datang, Warga SMKA Tok Bachok!</h1>
+                        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight">Selamat Datang, Pekerja!</h1>
                         <p class="text-slate-300 text-xs md:text-sm mt-2 leading-relaxed">Sila halakan wajah anda pada kamera untuk merekod kehadiran harian.</p>
                     </div>
                     <div class="relative z-10 flex flex-col items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 text-center">
@@ -172,7 +170,7 @@
                 </div>
             </div>
 
-            <!-- 2. HALAMAN PERMOHONAN CUTI (BEBAS UNTUK PEKERJA) -->
+            <!-- 2. HALAMAN PERMOHONAN CUTI -->
             <div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
                 <div class="mb-8">
                     <h2 class="text-2xl font-extrabold text-slate-900">Borang Permohonan Cuti</h2>
@@ -203,7 +201,7 @@
                 </div>
             </div>
 
-            <!-- 2.1 HALAMAN KELULUSAN CUTI ADMIN (DIKUNCI) -->
+            <!-- 2.1 HALAMAN KELULUSAN CUTI ADMIN -->
             <div id="page-kelulusan" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
                 <div class="mb-8">
                     <h2 class="text-2xl font-extrabold text-slate-900">Panel Kelulusan Cuti (Admin)</h2>
@@ -216,7 +214,7 @@
                 </div>
             </div>
 
-            <!-- 3. DASHBOARD ANALISIS (TANGGAL TEPAT) -->
+            <!-- 3. DASHBOARD ANALISIS -->
             <div id="page-dashboard" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
                 <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
@@ -344,7 +342,7 @@
         const KATA_LALUAN_ADMIN = "admin123"; 
         let halamanTertunda = null;
         let senaraiPekerjaDB = [];
-        let rekodKehadiranSemua = []; // Menyimpan semua rekod kehadiran berasingan ikut tarikh
+        let rekodKehadiranSemua = []; 
 
         setInterval(() => {
             const now = new Date();
@@ -355,8 +353,13 @@
         }, 1000);
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Tetapkan tarikh input kepada hari ini secara default
-            const hariIniStr = new Date().toISOString().split('T')[0];
+            // Tetapkan tarikh input kepada format YYYY-MM-DD yang betul untuk padanan JavaScript
+            const hariIni = new Date();
+            const tahun = hariIni.getFullYear();
+            const bulan = String(hariIni.getMonth() + 1).padStart(2, '0');
+            const hari = String(hariIni.getDate()).padStart(2, '0');
+            const hariIniStr = `${tahun}-${bulan}-${hari}`;
+
             const inputTarikh = document.getElementById('pilih-tarikh-analisis');
             if(inputTarikh) inputTarikh.value = hariIniStr;
 
@@ -445,10 +448,10 @@
         }
 
         function kemaskiniDashboardAnalisis() {
-            const tarikhPilih = document.getElementById('pilih-tarikh-analisis').value;
+            const tarikhPilih = document.getElementById('pilih-tarikh-analisis').value; // Format: YYYY-MM-DD
             const jumlahPekerja = senaraiPekerjaDB.length;
 
-            // Tapis rekod kehadiran khusus mengikut tarikh yang dipilih sahaja
+            // Tapis rekod kehadiran tepat mengikut tarikh yang dipilih
             const senaraiHadirTarikhIni = rekodKehadiranSemua.filter(h => h.tarikh === tarikhPilih);
             const hadirSet = new Set(senaraiHadirTarikhIni.map(h => h.id));
             
@@ -468,6 +471,7 @@
                 `).join('');
             }
 
+            // Senarai pekerja yang TIDAK HADIR pada tarikh tersebut
             const pekerjaTidakHadir = senaraiPekerjaDB.filter(p => !hadirSet.has(p.employeeId));
             if (pekerjaTidakHadir.length === 0) {
                 htmlTidakHadir = `<tr><td colspan="2" class="p-4 text-center text-slate-400">Semua pekerja telah hadir pada tarikh ini.</td></tr>`;
@@ -525,7 +529,9 @@
                     const namaPekerja = pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label;
                     const jabatanPekerja = pekerjaPadan ? pekerjaPadan.department : '';
                     
-                    const tarikhHariIni = new Date().toISOString().split('T')[0];
+                    const d = new Date();
+                    const tarikhHariIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    
                     const sudahHadirHariIni = rekodKehadiranSemua.some(h => h.id === bestMatch.label && h.tarikh === tarikhHariIni);
 
                     if (!sudahHadirHariIni) {
@@ -545,6 +551,9 @@
                         <h4 class="font-bold text-emerald-600 text-base">Kehadiran Berjaya Direkod!</h4>
                         <p class="text-xs text-slate-700 mt-2 font-bold bg-emerald-50 py-1.5 px-3 rounded-lg inline-block">${namaPekerja}</p>
                     `;
+                    
+                    // Kemaskini paparan analisis serta-merta
+                    kemaskiniDashboardAnalisis();
                 }
             } catch (error) {
                 console.error(error);
