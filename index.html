@@ -500,15 +500,26 @@
             `;
 
             try {
+                // 1. Dapatkan senarai terbaru dari pelayan TAPI JANGAN overwrite senaraiPekerjaDB utama
                 const res = await fetch(`${urlWebApps}?action=employees`);
                 const rawData = await res.json();
-                senaraiPekerjaDB = rawData.filter(emp => emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0);
+                const senaraiSemua = Array.isArray(rawData) ? rawData : (rawData.employees || []);
+                
+                // Kemaskini senarai utama di latar belakang supaya Dashboard kekal tepat
+                if(senaraiSemua.length > 0) {
+                    senaraiPekerjaDB = senaraiSemua; 
+                    document.getElementById('stat-jumlah-pekerja').textContent = senaraiPekerjaDB.length;
+                }
 
-                if (senaraiPekerjaDB.length === 0) {
+                // 2. Buat senarai KHAS untuk pengesanan wajah sahaja (pekerja yang ada data wajah)
+                const pekerjaBerwajah = senaraiSemua.filter(emp => emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0);
+
+                if (pekerjaBerwajah.length === 0) {
                     document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Tiada rekod wajah dalam sistem</h4>`;
                     return;
                 }
 
+                // 3. Mula mengimbas wajah dari kamera
                 const detection = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
                     .withFaceLandmarks()
                     .withFaceDescriptor();
@@ -518,22 +529,26 @@
                     return;
                 }
 
-                let labeledDescriptors = senaraiPekerjaDB.map(emp => new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]));
+                // 4. Padankan wajah dengan senarai pekerjaBerwajah
+                let labeledDescriptors = pekerjaBerwajah.map(emp => new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]));
                 const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
                 const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
 
                 if (bestMatch.label === 'unknown') {
                     document.getElementById('status-kotak').innerHTML = `<h4 class="font-bold text-red-600 text-sm">Wajah Tidak Dikenali</h4>`;
                 } else {
+                    // Cari butiran pekerja yang berjaya dipadankan
                     const pekerjaPadan = senaraiPekerjaDB.find(e => e.employeeId === bestMatch.label);
                     const namaPekerja = pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label;
                     const jabatanPekerja = pekerjaPadan ? pekerjaPadan.department : '';
                     
+                    // Format tarikh YYYY-MM-DD
                     const d = new Date();
                     const tarikhHariIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     
                     const sudahHadirHariIni = rekodKehadiranSemua.some(h => h.id === bestMatch.label && h.tarikh === tarikhHariIni);
 
+                    // 5. Jika belum hadir, masukkan dalam Array kehadiran tempatan
                     if (!sudahHadirHariIni) {
                         rekodKehadiranSemua.push({
                             id: bestMatch.label,
@@ -542,6 +557,9 @@
                             tarikh: tarikhHariIni,
                             masa: new Date().toLocaleTimeString('ms-MY')
                         });
+                        
+                        // NOTA PENTING: Untuk fungsi sebenar, anda patut HANTAR POST request ke GAS ('attendance') di sini.
+                        // Contoh: hantarKehadiranKeSheet(bestMatch.label, namaPekerja);
                     }
 
                     document.getElementById('status-kotak').innerHTML = `
@@ -552,12 +570,12 @@
                         <p class="text-xs text-slate-700 mt-2 font-bold bg-emerald-50 py-1.5 px-3 rounded-lg inline-block">${namaPekerja}</p>
                     `;
                     
-                    // Kemaskini paparan analisis serta-merta
+                    // 6. Kemaskini paparan Dashboard supaya ia memuat semula senarai
                     kemaskiniDashboardAnalisis();
                 }
             } catch (error) {
                 console.error(error);
-                document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Ralat sambungan pelayan.</h4>`;
+                document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Ralat memproses kehadiran.</h4>`;
             }
         }
 
