@@ -20,15 +20,15 @@
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-800">
 
-    <!-- MODAL POPUP PASSWORD ADMIN -->
+    <!-- MODAL POPUP PASSWORD ADMIN (KHUSUS UNTUK CUTI/PENTADBIR) -->
     <div id="modal-admin" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-all duration-300">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-100">
             <div class="text-center mb-6">
                 <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-shield-halved text-xl"></i>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900">Akses Pengesahan Admin</h3>
-                <p class="text-xs text-slate-500 mt-1">Sila masukkan kata laluan untuk meneruskan.</p>
+                <h3 class="text-lg font-bold text-slate-900">Pengesahan Admin Cuti</h3>
+                <p class="text-xs text-slate-500 mt-1">Sila masukkan kata laluan untuk pengurusan cuti.</p>
             </div>
             <form onsubmit="sahAdminLogin(event)" class="space-y-4">
                 <div class="relative">
@@ -80,15 +80,17 @@
                             <button onclick="tukarHalaman('kehadiran')" id="nav-kehadiran" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left">
                                 <i class="fa-solid fa-camera-rotate w-5 text-blue-200"></i><span>Scan & Rekod Hadir</span>
                             </button>
-                            <button onclick="tukarHalaman('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
-                                <i class="fa-solid fa-calendar-days w-5 text-slate-400"></i><span>Permohonan Cuti</span>
+                            <!-- Permohonan Cuti dikunci dengan Password Admin -->
+                            <button onclick="mintaAksesAdmin('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                                <i class="fa-solid fa-calendar-days w-5 text-slate-400"></i><span>Permohonan Cuti <i class="fa-solid fa-lock text-[10px] ml-auto text-amber-400"></i></span>
                             </button>
                         </div>
                     </div>
 
                     <div>
-                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 mb-3">Pengurusan Sistem</p>
-                        <button onclick="mintaAksesAdmin('pekerja')" id="nav-pekerja" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 mb-3">Pengurusan</p>
+                        <!-- Daftar Wajah Pekerja Terus Masuk Tanpa Password -->
+                        <button onclick="tukarHalaman('pekerja')" id="nav-pekerja" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
                             <i class="fa-solid fa-user-gear w-5 text-slate-400"></i><span>Daftar Wajah Pekerja</span>
                         </button>
                     </div>
@@ -170,7 +172,7 @@
             <!-- 2. HALAMAN PERMOHONAN CUTI -->
             <div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
                 <div class="mb-8">
-                    <h2 class="text-2xl font-extrabold text-slate-900">Permohonan Cuti Pekerja</h2>
+                    <h2 class="text-2xl font-extrabold text-slate-900">Kelulusan Permohonan Cuti</h2>
                 </div>
                 <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
                     <form id="leaveForm" class="space-y-6">
@@ -181,7 +183,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
-                                <input type="text" id="cutiEmpName" placeholder="Nama anda" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
+                                <input type="text" id="cutiEmpName" placeholder="Nama pekerja" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
                             </div>
                         </div>
                         <div>
@@ -192,12 +194,12 @@
                                 <option value="Sebab Lain">Sebab Lain</option>
                             </select>
                         </div>
-                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg">Hantar Permohonan</button>
+                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg">Proses Permohonan</button>
                     </form>
                 </div>
             </div>
 
-            <!-- 3. DASHBOARD ANALISIS (BARU & LENGKAP) -->
+            <!-- 3. DASHBOARD ANALISIS -->
             <div id="page-dashboard" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
                 <div class="mb-8 flex justify-between items-center">
                     <div>
@@ -209,7 +211,6 @@
                     </button>
                 </div>
 
-                <!-- Kad Statistik Ringkasan -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center space-x-4">
                         <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold">
@@ -240,9 +241,7 @@
                     </div>
                 </div>
 
-                <!-- Jadual Senarai Nama Hadir & Tidak Hadir -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Senarai Hadir -->
                     <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
                         <h3 class="text-sm font-extrabold text-emerald-700 uppercase tracking-wider mb-4 flex items-center">
                             <i class="fa-solid fa-circle-check mr-2"></i> Senarai Pekerja Hadir Hari Ini
@@ -263,7 +262,6 @@
                         </div>
                     </div>
 
-                    <!-- Senarai Tidak Hadir -->
                     <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
                         <h3 class="text-sm font-extrabold text-rose-700 uppercase tracking-wider mb-4 flex items-center">
                             <i class="fa-solid fa-circle-xmark mr-2"></i> Senarai Pekerja Belum Hadir / Tidak Hadir
@@ -285,10 +283,11 @@
                 </div>
             </div>
 
-            <!-- 4. HALAMAN PENDAFTARAN WAJAH PEKERJA -->
+            <!-- 4. HALAMAN PENDAFTARAN WAJAH PEKERJA (BEBAS TANPA PASSWORD) -->
             <div id="page-pekerja" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
                 <div class="mb-8">
                     <h2 class="text-2xl font-extrabold text-slate-900">Pendaftaran Wajah Pekerja</h2>
+                    <p class="text-xs text-slate-500 mt-1">Daftarkan profil dan imbasan biometrik wajah baharu.</p>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-5 bg-white rounded-3xl shadow-xl border border-slate-100 p-8 space-y-6">
@@ -325,7 +324,7 @@
         const KATA_LALUAN_ADMIN = "admin123"; 
         let halamanTertunda = null;
         let senaraiPekerjaDB = [];
-        let senaraiHadirHariIni = []; // Simpan rekod kehadiran simulasi/sebenar
+        let senaraiHadirHariIni = [];
 
         setInterval(() => {
             const now = new Date();
@@ -422,7 +421,6 @@
 
         function kemaskiniDashboardAnalisis() {
             const jumlahPekerja = senaraiPekerjaDB.length;
-            // Tapis pekerja yang sudah ada dalam senarai hadir hari ini
             const hadirSet = new Set(senaraiHadirHariIni.map(h => h.id));
             
             let htmlHadir = "";
@@ -498,7 +496,6 @@
                     const namaPekerja = pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label;
                     const jabatanPekerja = pekerjaPadan ? pekerjaPadan.department : '';
                     
-                    // Masukkan ke senarai hadir hari ini jika belum ada
                     if (!senaraiHadirHariIni.some(h => h.id === bestMatch.label)) {
                         senaraiHadirHariIni.push({
                             id: bestMatch.label,
@@ -523,7 +520,7 @@
         }
 
         async function hantarDataPekerja() { alert("Fungsi pendaftaran simpan wajah pekerja aktif."); }
-        function hantarPermohonanCuti() { alert("Permohonan cuti berjaya dihantar."); }
+        function hantarPermohonanCuti() { alert("Permohonan cuti berjaya diproses."); }
     </script>
 </body>
 </html>
