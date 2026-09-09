@@ -20,15 +20,15 @@
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-800">
 
-    <!-- MODAL POPUP PASSWORD ADMIN (KHUSUS UNTUK CUTI/PENTADBIR) -->
+    <!-- MODAL POPUP PASSWORD ADMIN (KHUSUS UNTUK KELULUSAN CUTI) -->
     <div id="modal-admin" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-all duration-300">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-100">
             <div class="text-center mb-6">
                 <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-shield-halved text-xl"></i>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900">Pengesahan Admin Cuti</h3>
-                <p class="text-xs text-slate-500 mt-1">Sila masukkan kata laluan untuk pengurusan cuti.</p>
+                <h3 class="text-lg font-bold text-slate-900">Pengesahan Kelulusan Admin</h3>
+                <p class="text-xs text-slate-500 mt-1">Masukkan kata laluan untuk meluluskan/menolak cuti.</p>
             </div>
             <form onsubmit="sahAdminLogin(event)" class="space-y-4">
                 <div class="relative">
@@ -80,16 +80,19 @@
                             <button onclick="tukarHalaman('kehadiran')" id="nav-kehadiran" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left">
                                 <i class="fa-solid fa-camera-rotate w-5 text-blue-200"></i><span>Scan & Rekod Hadir</span>
                             </button>
-                            <!-- Permohonan Cuti dikunci dengan Password Admin -->
-                            <button onclick="mintaAksesAdmin('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
-                                <i class="fa-solid fa-calendar-days w-5 text-slate-400"></i><span>Permohonan Cuti <i class="fa-solid fa-lock text-[10px] ml-auto text-amber-400"></i></span>
+                            <!-- Borang Cuti Bebas Diisi Tanpa Password -->
+                            <button onclick="tukarHalaman('cuti')" id="nav-cuti" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                                <i class="fa-solid fa-calendar-days w-5 text-slate-400"></i><span>Permohonan Cuti</span>
+                            </button>
+                            <!-- Panel Kelulusan Cuti Dikunci Admin -->
+                            <button onclick="mintaAksesAdmin('kelulusan')" id="nav-kelulusan" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
+                                <i class="fa-solid fa-clipboard-check w-5 text-slate-400"></i><span>Kelulusan Cuti (Admin) <i class="fa-solid fa-lock text-[10px] ml-auto text-amber-400"></i></span>
                             </button>
                         </div>
                     </div>
 
                     <div>
                         <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 mb-3">Pengurusan</p>
-                        <!-- Daftar Wajah Pekerja Terus Masuk Tanpa Password -->
                         <button onclick="tukarHalaman('pekerja')" id="nav-pekerja" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left">
                             <i class="fa-solid fa-user-gear w-5 text-slate-400"></i><span>Daftar Wajah Pekerja</span>
                         </button>
@@ -169,21 +172,22 @@
                 </div>
             </div>
 
-            <!-- 2. HALAMAN PERMOHONAN CUTI -->
+            <!-- 2. HALAMAN PERMOHONAN CUTI (BEBAS UNTUK PEKERJA) -->
             <div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
                 <div class="mb-8">
-                    <h2 class="text-2xl font-extrabold text-slate-900">Kelulusan Permohonan Cuti</h2>
+                    <h2 class="text-2xl font-extrabold text-slate-900">Borang Permohonan Cuti</h2>
+                    <p class="text-xs text-slate-500 mt-1">Pekerja boleh mengisi butiran cuti di sini.</p>
                 </div>
                 <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
                     <form id="leaveForm" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
-                                <input type="text" id="cutiEmpId" placeholder="EMP001" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
+                                <input type="text" id="cutiEmpId" placeholder="EMP001" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm" required>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
-                                <input type="text" id="cutiEmpName" placeholder="Nama pekerja" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
+                                <input type="text" id="cutiEmpName" placeholder="Nama anda" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm" required>
                             </div>
                         </div>
                         <div>
@@ -194,21 +198,37 @@
                                 <option value="Sebab Lain">Sebab Lain</option>
                             </select>
                         </div>
-                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg">Proses Permohonan</button>
+                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition">Hantar Permohonan Cuti</button>
                     </form>
                 </div>
             </div>
 
-            <!-- 3. DASHBOARD ANALISIS -->
+            <!-- 2.1 HALAMAN KELULUSAN CUTI ADMIN (DIKUNCI) -->
+            <div id="page-kelulusan" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Panel Kelulusan Cuti (Admin)</h2>
+                    <p class="text-xs text-slate-500 mt-1">Tindakan Lulus atau Tolak permohonan cuti pekerja.</p>
+                </div>
+                <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+                    <div id="senarai-permohonan-cuti" class="space-y-4">
+                        <p class="text-xs text-slate-400 text-center py-4">Tiada permohonan cuti baru menunggu kelulusan.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. DASHBOARD ANALISIS (TANGGAL TEPAT) -->
             <div id="page-dashboard" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
-                <div class="mb-8 flex justify-between items-center">
+                <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 class="text-2xl font-extrabold text-slate-900">Dashboard Analisis Kehadiran</h2>
-                        <p class="text-xs text-slate-500 mt-1">Status kehadiran pekerja hari ini secara langsung.</p>
+                        <p class="text-xs text-slate-500 mt-1">Analisis berdasarkan tarikh semasa.</p>
                     </div>
-                    <button onclick="muatTurunSenaraiPekerja()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl text-xs font-bold transition">
-                        <i class="fa-solid fa-rotate mr-1.5"></i> Segar Semula Data
-                    </button>
+                    <div class="flex items-center space-x-3">
+                        <input type="date" id="pilih-tarikh-analisis" onchange="kemaskiniDashboardAnalisis()" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                        <button onclick="muatTurunSenaraiPekerja()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl text-xs font-bold transition">
+                            <i class="fa-solid fa-rotate mr-1.5"></i> Segar Semula
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -226,7 +246,7 @@
                             <i class="fa-solid fa-user-check"></i>
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hadir Hari Ini</p>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hadir Pada Tarikh Ini</p>
                             <h3 class="text-3xl font-extrabold text-emerald-600 mt-1" id="stat-hadir">0</h3>
                         </div>
                     </div>
@@ -235,7 +255,7 @@
                             <i class="fa-solid fa-user-xmark"></i>
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tidak Hadir</p>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tidak Hadir / Cuti</p>
                             <h3 class="text-3xl font-extrabold text-rose-600 mt-1" id="stat-tidak-hadir">0</h3>
                         </div>
                     </div>
@@ -244,7 +264,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
                         <h3 class="text-sm font-extrabold text-emerald-700 uppercase tracking-wider mb-4 flex items-center">
-                            <i class="fa-solid fa-circle-check mr-2"></i> Senarai Pekerja Hadir Hari Ini
+                            <i class="fa-solid fa-circle-check mr-2"></i> Senarai Hadir (Tarikh Terpilih)
                         </h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
@@ -252,11 +272,11 @@
                                     <tr>
                                         <th class="p-3 rounded-l-xl">Nama / ID</th>
                                         <th class="p-3">Jabatan</th>
-                                        <th class="p-3 rounded-r-xl">Masa Hadir</th>
+                                        <th class="p-3 rounded-r-xl">Masa Imbasan</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabel-hadir-body" class="divide-y divide-slate-100">
-                                    <tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada rekod lagi hari ini.</td></tr>
+                                    <tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada rekod pada tarikh ini.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -264,7 +284,7 @@
 
                     <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
                         <h3 class="text-sm font-extrabold text-rose-700 uppercase tracking-wider mb-4 flex items-center">
-                            <i class="fa-solid fa-circle-xmark mr-2"></i> Senarai Pekerja Belum Hadir / Tidak Hadir
+                            <i class="fa-solid fa-circle-xmark mr-2"></i> Senarai Tidak Hadir / Belum Imbas
                         </h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
@@ -283,7 +303,7 @@
                 </div>
             </div>
 
-            <!-- 4. HALAMAN PENDAFTARAN WAJAH PEKERJA (BEBAS TANPA PASSWORD) -->
+            <!-- 4. HALAMAN PENDAFTARAN WAJAH PEKERJA -->
             <div id="page-pekerja" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
                 <div class="mb-8">
                     <h2 class="text-2xl font-extrabold text-slate-900">Pendaftaran Wajah Pekerja</h2>
@@ -324,7 +344,7 @@
         const KATA_LALUAN_ADMIN = "admin123"; 
         let halamanTertunda = null;
         let senaraiPekerjaDB = [];
-        let senaraiHadirHariIni = [];
+        let rekodKehadiranSemua = []; // Menyimpan semua rekod kehadiran berasingan ikut tarikh
 
         setInterval(() => {
             const now = new Date();
@@ -335,6 +355,11 @@
         }, 1000);
 
         window.addEventListener('DOMContentLoaded', async () => {
+            // Tetapkan tarikh input kepada hari ini secara default
+            const hariIniStr = new Date().toISOString().split('T')[0];
+            const inputTarikh = document.getElementById('pilih-tarikh-analisis');
+            if(inputTarikh) inputTarikh.value = hariIniStr;
+
             try {
                 if (typeof faceapi === 'undefined') throw new Error("Face-api tidak dimuatkan.");
                 document.getElementById('text-model-kamera').textContent = "Memuat Model AI...";
@@ -371,7 +396,7 @@
         }
 
         function tukarHalaman(halaman) {
-            ['dashboard', 'pekerja', 'kehadiran', 'cuti'].forEach(h => {
+            ['dashboard', 'pekerja', 'kehadiran', 'cuti', 'kelulusan'].forEach(h => {
                 const elPage = document.getElementById(`page-${h}`);
                 const elNav = document.getElementById(`nav-${h}`);
                 if(elPage) elPage.classList.add('hidden');
@@ -420,17 +445,21 @@
         }
 
         function kemaskiniDashboardAnalisis() {
+            const tarikhPilih = document.getElementById('pilih-tarikh-analisis').value;
             const jumlahPekerja = senaraiPekerjaDB.length;
-            const hadirSet = new Set(senaraiHadirHariIni.map(h => h.id));
+
+            // Tapis rekod kehadiran khusus mengikut tarikh yang dipilih sahaja
+            const senaraiHadirTarikhIni = rekodKehadiranSemua.filter(h => h.tarikh === tarikhPilih);
+            const hadirSet = new Set(senaraiHadirTarikhIni.map(h => h.id));
             
             let htmlHadir = "";
             let htmlTidakHadir = "";
             let jumlahHadir = hadirSet.size;
 
             if (jumlahHadir === 0) {
-                htmlHadir = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada rekod hadir hari ini.</td></tr>`;
+                htmlHadir = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada rekod pada tarikh ini.</td></tr>`;
             } else {
-                htmlHadir = senaraiHadirHariIni.map(h => `
+                htmlHadir = senaraiHadirTarikhIni.map(h => `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-bold text-slate-700">${h.nama} <span class="block text-[10px] text-slate-400 font-normal">${h.id}</span></td>
                         <td class="p-3 text-slate-500">${h.jabatan || '-'}</td>
@@ -441,7 +470,7 @@
 
             const pekerjaTidakHadir = senaraiPekerjaDB.filter(p => !hadirSet.has(p.employeeId));
             if (pekerjaTidakHadir.length === 0) {
-                htmlTidakHadir = `<tr><td colspan="2" class="p-4 text-center text-slate-400">Semua pekerja telah hadir!</td></tr>`;
+                htmlTidakHadir = `<tr><td colspan="2" class="p-4 text-center text-slate-400">Semua pekerja telah hadir pada tarikh ini.</td></tr>`;
             } else {
                 htmlTidakHadir = pekerjaTidakHadir.map(p => `
                     <tr class="hover:bg-slate-50">
@@ -496,11 +525,15 @@
                     const namaPekerja = pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label;
                     const jabatanPekerja = pekerjaPadan ? pekerjaPadan.department : '';
                     
-                    if (!senaraiHadirHariIni.some(h => h.id === bestMatch.label)) {
-                        senaraiHadirHariIni.push({
+                    const tarikhHariIni = new Date().toISOString().split('T')[0];
+                    const sudahHadirHariIni = rekodKehadiranSemua.some(h => h.id === bestMatch.label && h.tarikh === tarikhHariIni);
+
+                    if (!sudahHadirHariIni) {
+                        rekodKehadiranSemua.push({
                             id: bestMatch.label,
                             nama: namaPekerja,
                             jabatan: jabatanPekerja,
+                            tarikh: tarikhHariIni,
                             masa: new Date().toLocaleTimeString('ms-MY')
                         });
                     }
@@ -519,8 +552,18 @@
             }
         }
 
+        function hantarPermohonanCuti() {
+            const id = document.getElementById('cutiEmpId').value;
+            const nama = document.getElementById('cutiEmpName').value;
+            if(!id || !nama) {
+                alert("Sila lengkapkan ID dan Nama.");
+                return;
+            }
+            alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan.");
+            document.getElementById('leaveForm').reset();
+        }
+
         async function hantarDataPekerja() { alert("Fungsi pendaftaran simpan wajah pekerja aktif."); }
-        function hantarPermohonanCuti() { alert("Permohonan cuti berjaya diproses."); }
     </script>
 </body>
 </html>
