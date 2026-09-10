@@ -578,7 +578,6 @@ async function rekodKehadiranSistem() {
                 document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Ralat memproses kehadiran.</h4>`;
             }
         }
-
 // FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
         async function hantarPermohonanCuti() {
             // Ambil elemen dengan selamat
@@ -607,26 +606,27 @@ async function rekodKehadiranSistem() {
             }
 
             try {
-                // Paparkan status sedang menghantar (opsional untuk pengguna tahu)
                 console.log("Menghantar permohonan cuti...", { id, nama, sebab, tarikhMula, tarikhAkhir });
+
+                // Tukar kepada URLSearchParams supaya serasi dengan backend Google Apps Script standard
+                const formData = new URLSearchParams();
+                formData.append("type", "leave");
+                formData.append("employeeId", id);
+                formData.append("employeeName", nama);
+                formData.append("reason", sebab);
+                formData.append("startDate", tarikhMula);
+                formData.append("endDate", tarikhAkhir);
+                formData.append("status", "Dalam Proses");
 
                 const response = await fetch(urlWebApps, {
                     method: 'POST',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({
-                        type: "leave",
-                        employeeId: id,
-                        employeeName: nama,
-                        reason: sebab,
-                        startDate: tarikhMula,
-                        endDate: tarikhAkhir,
-                        status: "Dalam Proses"
-                    })
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
                 });
 
                 const result = await response.json();
                 
-                if (result && result.result === "success") {
+                if (result && (result.result === "success" || result.status === "success")) {
                     alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan!");
                     
                     // Reset borang dengan selamat
@@ -634,11 +634,11 @@ async function rekodKehadiranSistem() {
                     if (formCuti) formCuti.reset();
                     if (elNama) elNama.value = '';
                 } else {
-                    alert("Gagal menghantar permohonan. Sila cuba lagi.");
+                    alert("Gagal menghantar permohonan. Sila semak semula pelayan Google Apps Script.");
                 }
             } catch (err) {
                 console.error("Ralat AJAX:", err);
-                alert("Ralat sambungan ke pelayan Google Apps Script.");
+                alert("Ralat sambungan ke pelayan Google Apps Script. Sila pastikan URL Web Apps betul.");
             }
         }
 
