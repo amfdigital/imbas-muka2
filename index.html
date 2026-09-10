@@ -336,7 +336,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Logik -->
+<!-- JavaScript Logik -->
     <script>
         const urlWebApps = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
         const KATA_LALUAN_ADMIN = "admin123"; 
@@ -434,6 +434,7 @@
             }
         }
 
+        // --- FUNGSI MUAT TURUN & DROPDOWN PEKERJA ---
         function muatTurunSenaraiPekerja() {
             fetch(`${urlWebApps}?action=employees`)
                 .then(response => response.json())
@@ -442,16 +443,51 @@
                         senaraiPekerjaDB = data;
                         document.getElementById('stat-jumlah-pekerja').textContent = data.length;
                         kemaskiniDashboardAnalisis();
+                        muatDropdownPekerjaCuti(); // Kemaskini dropdown cuti automatik
                     }
                 })
                 .catch(err => { console.log("Gagal muat senarai: ", err); });
         }
 
+        // Mengisi pilihan ID ke dalam Dropdown Borang Cuti
+        function muatDropdownPekerjaCuti() {
+            const selectEl = document.getElementById('cuti-employee-id');
+            if (!selectEl) return;
+            
+            let optionsHtml = '<option value="">Sila pilih ID Pekerja</option>';
+            if (Array.isArray(senaraiPekerjaDB)) {
+                senaraiPekerjaDB.forEach(emp => {
+                    optionsHtml += `<option value="${emp.employeeId}">${emp.employeeId} - ${emp.employeeName}</option>`;
+                });
+            }
+            selectEl.innerHTML = optionsHtml;
+        }
+
+        // Auto keluar nama apabila ID dipilih dari dropdown
+        function pilihPekerjaCuti(selectedId) {
+            const inputNama = document.getElementById('cuti-employee-name');
+            if (!inputNama) return;
+
+            if (!selectedId) {
+                inputNama.value = '';
+                return;
+            }
+
+            const pekerjaJumpa = senaraiPekerjaDB.find(emp => 
+                String(emp.employeeId).trim() === String(selectedId).trim()
+            );
+
+            if (pekerjaJumpa) {
+                inputNama.value = pekerjaJumpa.employeeName;
+            } else {
+                inputNama.value = '';
+            }
+        }
+
         function kemaskiniDashboardAnalisis() {
-            const tarikhPilih = document.getElementById('pilih-tarikh-analisis').value; // Format: YYYY-MM-DD
+            const tarikhPilih = document.getElementById('pilih-tarikh-analisis').value; 
             const jumlahPekerja = senaraiPekerjaDB.length;
 
-            // Tapis rekod kehadiran tepat mengikut tarikh yang dipilih
             const senaraiHadirTarikhIni = rekodKehadiranSemua.filter(h => h.tarikh === tarikhPilih);
             const hadirSet = new Set(senaraiHadirTarikhIni.map(h => h.id));
             
@@ -471,7 +507,6 @@
                 `).join('');
             }
 
-            // Senarai pekerja yang TIDAK HADIR pada tarikh tersebut
             const pekerjaTidakHadir = senaraiPekerjaDB.filter(p => !hadirSet.has(p.employeeId));
             if (pekerjaTidakHadir.length === 0) {
                 htmlTidakHadir = `<tr><td colspan="2" class="p-4 text-center text-slate-400">Semua pekerja telah hadir pada tarikh ini.</td></tr>`;
@@ -490,7 +525,7 @@
             document.getElementById('tabel-tidakhadir-body').innerHTML = htmlTidakHadir;
         }
 
-async function rekodKehadiranSistem() {
+        async function rekodKehadiranSistem() {
             const videoEl = document.getElementById('webcam-scanner');
             document.getElementById('status-kotak').innerHTML = `
                 <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-spin">
@@ -550,7 +585,6 @@ async function rekodKehadiranSistem() {
                             masa: new Date().toLocaleTimeString('ms-MY')
                         });
                         
-                        // Hantar kehadiran ke Google Sheets secara automatik (POST)
                         await fetch(urlWebApps, {
                             method: 'POST',
                             headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -578,9 +612,9 @@ async function rekodKehadiranSistem() {
                 document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Ralat memproses kehadiran.</h4>`;
             }
         }
-// FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
+
+        // FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
         async function hantarPermohonanCuti() {
-            // Ambil elemen dengan selamat
             const elId = document.getElementById('cuti-employee-id');
             const elNama = document.getElementById('cuti-employee-name');
             const elSebab = document.getElementById('cuti-reason');
@@ -591,24 +625,19 @@ async function rekodKehadiranSistem() {
             const nama = elNama ? elNama.value.trim() : "";
             const sebab = elSebab ? elSebab.value : "Cuti Umum";
             
-            // Dapatkan tarikh hari ini sebagai format YYYY-MM-DD yang selamat
             const dKini = new Date();
             const tarikhHariIni = `${dKini.getFullYear()}-${String(dKini.getMonth() + 1).padStart(2, '0')}-${String(dKini.getDate()).padStart(2, '0')}`;
             
             const tarikhMula = elTarikhMula && elTarikhMula.value ? elTarikhMula.value : tarikhHariIni;
             const tarikhAkhir = elTarikhAkhir && elTarikhAkhir.value ? elTarikhAkhir.value : tarikhMula;
 
-            // Validasi asas
-            if (!id || !nama || nama === 'ID tidak ditemui' || nama === 'ID tidak ditemui di dalam sistem') {
-                alert("Sila masukkan ID Pekerja yang sah dan pastikan nama telah dijana.");
+            if (!id || !nama) {
+                alert("Sila pilih ID Pekerja yang sah daripada pilihan senarai.");
                 if (elId) elId.focus();
                 return;
             }
 
             try {
-                console.log("Menghantar permohonan cuti...", { id, nama, sebab, tarikhMula, tarikhAkhir });
-
-                // Tukar kepada URLSearchParams supaya serasi dengan backend Google Apps Script standard
                 const formData = new URLSearchParams();
                 formData.append("type", "leave");
                 formData.append("employeeId", id);
@@ -629,7 +658,6 @@ async function rekodKehadiranSistem() {
                 if (result && (result.result === "success" || result.status === "success")) {
                     alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan!");
                     
-                    // Reset borang dengan selamat
                     const formCuti = document.getElementById('leaveForm');
                     if (formCuti) formCuti.reset();
                     if (elNama) elNama.value = '';
