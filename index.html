@@ -171,35 +171,39 @@
             </div>
 
             <!-- 2. HALAMAN PERMOHONAN CUTI -->
-            <div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-extrabold text-slate-900">Borang Permohonan Cuti</h2>
-                    <p class="text-xs text-slate-500 mt-1">Pekerja boleh mengisi butiran cuti di sini.</p>
+<div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
+    <div class="mb-8">
+        <h2 class="text-2xl font-extrabold text-slate-900">Borang Permohonan Cuti</h2>
+        <p class="text-xs text-slate-500 mt-1">Pekerja boleh mengisi butiran cuti di sini.</p>
+    </div>
+    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+        <form id="leaveForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
+                    <!-- Ditukar kepada dropdown <select> dan ditambah fungsi onchange -->
+                    <select id="cuti-employee-id" onchange="pilihPekerjaCuti(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
+                        <option value="">Sila pilih ID Pekerja</option>
+                    </select>
                 </div>
-                <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
-                    <form id="leaveForm" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
-                                <input type="text" id="cutiEmpId" placeholder="EMP001" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
-                                <input type="text" id="cutiEmpName" placeholder="Nama anda" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Jenis Cuti</label>
-                            <select id="cutiJenis" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
-                                <option value="MC">MC (Cuti Sakit)</option>
-                                <option value="CRK">Cuti Rehat Khas</option>
-                                <option value="Sebab Lain">Sebab Lain</option>
-                            </select>
-                        </div>
-                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition">Hantar Permohonan Cuti</button>
-                    </form>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
+                    <!-- Ditukar kepada readonly supaya nama keluar automatik dari sistem -->
+                    <input type="text" id="cuti-employee-name" placeholder="Nama keluar automatik" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600 cursor-not-allowed" readonly required>
                 </div>
             </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Jenis Cuti</label>
+                <select id="cuti-reason" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+                    <option value="MC (Cuti Sakit)">MC (Cuti Sakit)</option>
+                    <option value="Cuti Rehat Khas">Cuti Rehat Khas</option>
+                    <option value="Sebab Lain">Sebab Lain</option>
+                </select>
+            </div>
+            <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition">Hantar Permohonan Cuti</button>
+        </form>
+    </div>
+</div>
 
             <!-- 2.1 HALAMAN KELULUSAN CUTI ADMIN -->
             <div id="page-kelulusan" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
