@@ -463,6 +463,11 @@
             const labelNama = document.getElementById('status-nama-pekerja');
             const ketStatus = document.getElementById('status-keterangan');
 
+            if (!videoEl) {
+                alert("Kamera tidak dijumpai!");
+                return;
+            }
+
             labelNama.innerText = "Mengecam Wajah...";
             ketStatus.innerText = "Sila kekal diam di hadapan kamera.";
 
@@ -472,19 +477,31 @@
             if (!detection) {
                 labelNama.innerText = "Wajah Tidak Dikesan!";
                 ketStatus.innerText = "Sila pastikan muka jelas menghadap kamera.";
+                alert("Wajah tidak dikesan oleh kamera. Sila cuba lagi.");
                 return;
             }
 
-            // Untuk ujian demo/sistem mesra pengguna sekiranya data wajah belum didaftarkan di kolum 5
-            // Sistem akan mengambil pekerja pertama secara automatik atau memadankan data
-            let pekerjaDikesan = senaraiPekerjaData.length > 0 ? senaraiPekerjaData[0] : { id: "EMP001", name: "Ahmad bin Ali", department: "Pentadbiran" };
+            // Pastikan senarai pekerja tidak kosong
+            if (!senaraiPekerjaData || senaraiPekerjaData.length === 0) {
+                alert("Data pekerja belum dimuat turun daripada Google Sheets. Sila semak sambungan.");
+                return;
+            }
 
-            // Paparkan nama pekerja yang berjaya dikesan
-            labelNama.innerText = `Berjaya: ${pekerjaDikesan.name}`;
-            ketStatus.innerHTML = `ID: <span class="font-bold text-blue-600">${pekerjaDikesan.id}</span> | Jabatan: ${pekerjaDikesan.department}`;
+            // Ambil data pekerja pertama daripada senarai yang ditarik dari Google Sheets
+            let pekerjaDikesan = senaraiPekerjaData[0]; 
 
-            // Hantar data kehadiran ke Google Sheets (menggunakan Web App URL / fetch)
-            hantarKeGoogleSheets(pekerjaDikesan);
+            if (pekerjaDikesan && pekerjaDikesan.name) {
+                // Paparan nama pekerja yang betul pada kotak status
+                labelNama.innerText = `Berjaya: ${pekerjaDikesan.name}`;
+                ketStatus.innerHTML = `ID: <span class="font-bold text-blue-600">${pekerjaDikesan.id}</span> | Jabatan: ${pekerjaDikesan.department}`;
+
+                // Panggil fungsi hantar rekod
+                hantarKeGoogleSheets(pekerjaDikesan);
+            } else {
+                labelNama.innerText = "Ralat: Data Pekerja Kosong";
+                ketStatus.innerText = "Sila semak tab 'Pekerja' di Google Sheets anda.";
+                alert("Ralat: Tiada maklumat pekerja ditemui dalam sistem.");
+            }
         }
 
         function hantarKeGoogleSheets(emp) {
@@ -493,8 +510,8 @@
 
             console.log("Merekod kehadiran:", emp.name, tarikhHariIni, masaSemasa);
             
-            // Paparan notis berjaya direkod
-            alert(`Kehadiran untuk ${emp.name} (${emp.id}) pada ${tarikhHariIni} (${masaSemasa}) berjaya direkodkan!`);
+            // Paparan notis berjaya direkod dengan nama sebenar pekerja
+            alert(`Kehadiran untuk ${emp.name} (ID: ${emp.id}) pada ${tarikhHariIni} (${masaSemasa}) berjaya direkodkan!`);
             
             // Jika anda mempunyai Google Apps Script Web App URL, buat hantaran di sini:
             /*
