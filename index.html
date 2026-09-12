@@ -128,7 +128,7 @@
                 <div class="mb-8 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center">
                     <div class="relative z-10 max-w-xl text-center md:text-left mb-6 md:mb-0">
                         <span class="bg-blue-500/30 text-blue-200 text-xs font-bold px-3 py-1 rounded-full border border-blue-400/30 inline-block mb-3">⚡ PENGESAHAN BIOMETRIK PANTAS</span>
-                        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight">Selamat Datang, Warga SMKA Tok Bachok!</h1>
+                        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight">Selamat Datang, Warga Kerja!</h1>
                         <p class="text-slate-300 text-xs md:text-sm mt-2 leading-relaxed">Sila halakan wajah anda pada kamera untuk merekod kehadiran harian.</p>
                     </div>
                     <div class="relative z-10 flex flex-col items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 text-center">
@@ -180,14 +180,14 @@
                     <form id="leaveForm" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
-                                <select id="cuti-employee-id" onchange="pilihPekerjaCuti(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
-                                    <option value="">Sila pilih ID Pekerja</option>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Pilih Nama Pekerja</label>
+                                <select id="cuti-employee-select" onchange="autoIsiCuti(this)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
+                                    <option value="">-- Pilih Nama --</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
-                                <input type="text" id="cuti-employee-name" placeholder="Nama keluar automatik" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600 cursor-not-allowed" readonly required>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
+                                <input type="text" id="cuti-employee-id" placeholder="ID Pekerja" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600" readonly required>
                             </div>
                         </div>
                         <div>
@@ -224,7 +224,7 @@
                         <p class="text-xs text-slate-500 mt-1">Analisis berdasarkan tarikh semasa.</p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <input type="date" id="pilih-tarikh-analisis" onchange="kemaskiniDashboardAnalisis()" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                        <input type="date" id="pilih-tarikh-analisis" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 shadow-sm">
                         <button onclick="muatTurunSenaraiPekerja()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl text-xs font-bold transition">
                             <i class="fa-solid fa-rotate mr-1.5"></i> Segar Semula
                         </button>
@@ -257,47 +257,6 @@
                         <div>
                             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tidak Hadir / Cuti</p>
                             <h3 class="text-3xl font-extrabold text-rose-600 mt-1" id="stat-tidak-hadir">0</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
-                        <h3 class="text-sm font-extrabold text-emerald-700 uppercase tracking-wider mb-4 flex items-center">
-                            <i class="fa-solid fa-circle-check mr-2"></i> Senarai Hadir (Tarikh Terpilih)
-                        </h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
-                                <thead class="bg-slate-50 text-slate-400 uppercase">
-                                    <tr>
-                                        <th class="p-3 rounded-l-xl">Nama / ID</th>
-                                        <th class="p-3">Jabatan</th>
-                                        <th class="p-3 rounded-r-xl">Masa Imbasan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabel-hadir-body" class="divide-y divide-slate-100">
-                                    <tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada rekod pada tarikh ini.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
-                        <h3 class="text-sm font-extrabold text-rose-700 uppercase tracking-wider mb-4 flex items-center">
-                            <i class="fa-solid fa-circle-xmark mr-2"></i> Senarai Tidak Hadir / Belum Imbas
-                        </h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
-                                <thead class="bg-slate-50 text-slate-400 uppercase">
-                                    <tr>
-                                        <th class="p-3 rounded-l-xl">Nama / ID</th>
-                                        <th class="p-3 rounded-r-xl">Jabatan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabel-tidakhadir-body" class="divide-y divide-slate-100">
-                                    <tr><td colspan="2" class="p-4 text-center text-slate-400">Semua pekerja telah hadir.</td></tr>
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
@@ -355,8 +314,8 @@
         const KATA_LALUAN_ADMIN = "admin123"; 
         let halamanTertunda = null;
         let senaraiPekerjaDB = [];
-        let rekodKehadiranSemua = []; 
 
+        // Jam Masa Nyata
         setInterval(() => {
             const now = new Date();
             const timeEl = document.getElementById('real-time-clock');
@@ -374,6 +333,9 @@
 
             const inputTarikh = document.getElementById('pilih-tarikh-analisis');
             if(inputTarikh) inputTarikh.value = hariIniStr;
+
+            // Muat Turun Data Pekerja Dari Google Sheets Sebaik Mula
+            muatTurunSenaraiPekerja();
 
             try {
                 if (typeof faceapi === 'undefined') throw new Error("Face-api tidak dimuatkan.");
@@ -401,8 +363,6 @@
                     if(scanCam) scanCam.srcObject = stream;
                 })
                 .catch(err => { console.log("Kamera tidak diakses: ", err); });
-
-            muatTurunSenaraiPekerja();
         });
 
         function toggleSidebarMobile() {
@@ -424,12 +384,6 @@
             if(activeNav) activeNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left";
 
             if (window.innerWidth < 768) toggleSidebarMobile();
-            
-            if (halaman === 'dashboard') {
-                kemaskiniDashboardAnalisis();
-            } else if (halaman === 'kelulusan') {
-                muatTurunSenaraiCuti();
-            }
         }
 
         function mintaAksesAdmin(halamanTujuan) {
@@ -453,58 +407,73 @@
             }
         }
 
+        // Fungsi Ambil Data Pelayan & Isi Dropdown
+        function muatTurunSenaraiPekerja() {
+            fetch(urlWebApps)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        senaraiPekerjaDB = data;
+                        muatDropdownPekerjaDaftar();
+                        muatDropdownPekerjaCuti();
+                        
+                        const statJumlah = document.getElementById('stat-jumlah-pekerja');
+                        if(statJumlah) statJumlah.textContent = senaraiPekerjaDB.length;
+                    } else {
+                        console.error("Format data salah:", data);
+                    }
+                })
+                .catch(error => {
+                    console.error("Ralat memuat senarai pekerja:", error);
+                });
+        }
+
         function muatDropdownPekerjaDaftar() {
             const selectEl = document.getElementById('empName');
             if (!selectEl) return;
             
             let optionsHtml = '<option value="">-- Pilih Nama Guru / Pekerja --</option>';
-            if (Array.isArray(senaraiPekerjaDB) && senaraiPekerjaDB.length > 0) {
-                const senaraiTersusun = [...senaraiPekerjaDB].sort((a, b) => 
-                    String(a.employeeName || '').localeCompare(String(b.employeeName || ''))
-                );
-                
-                senaraiTersusun.forEach(emp => {
-                    optionsHtml += `<option value="${emp.employeeName}" data-id="${emp.employeeId || ''}" data-dept="${emp.department || ''}">${emp.employeeName}</option>`;
-                });
-            }
+            senaraiPekerjaDB.forEach(emp => {
+                optionsHtml += `<option value="${emp.employeeName}" data-id="${emp.employeeId || ''}" data-dept="${emp.department || ''}">${emp.employeeName}</option>`;
+            });
+            selectEl.innerHTML = optionsHtml;
+        }
+
+        function muatDropdownPekerjaCuti() {
+            const selectEl = document.getElementById('cuti-employee-select');
+            if (!selectEl) return;
+            
+            let optionsHtml = '<option value="">-- Pilih Nama --</option>';
+            senaraiPekerjaDB.forEach(emp => {
+                optionsHtml += `<option value="${emp.employeeId}" data-name="${emp.employeeName}">${emp.employeeName} (${emp.employeeId})</option>`;
+            });
             selectEl.innerHTML = optionsHtml;
         }
 
         function autoIsiMaklumatDaftar(selectElement) {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
-            const empIdInput = document.getElementById('empId');
-            const empDepartmentInput = document.getElementById('empDepartment');
-            
-            if (selectElement.value) {
-                empIdInput.value = selectedOption.getAttribute('data-id') || '';
-                empDepartmentInput.value = selectedOption.getAttribute('data-dept') || '';
-            } else {
-                empIdInput.value = '';
-                empDepartmentInput.value = '';
-            }
+            document.getElementById('empId').value = selectedOption.getAttribute('data-id') || '';
+            document.getElementById('empDepartment').value = selectedOption.getAttribute('data-dept') || '';
+        }
+
+        function autoIsiCuti(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            document.getElementById('cuti-employee-id').value = selectElement.value;
+            document.getElementById('cuti-employee-name').value = selectedOption.getAttribute('data-name') || '';
         }
 
         function hantarDataPekerja() {
             const nama = document.getElementById('empName').value;
             const id = document.getElementById('empId').value;
-            
             if (!nama || !id) {
                 alert("Sila pilih nama pekerja terlebih dahulu!");
                 return;
             }
-            alert(`Berjaya! Data wajah dan profil untuk ${nama} (${id}) bersedia untuk dihantar.`);
+            alert(`Berjaya! Data wajah dan profil untuk ${nama} (${id}) bersedia untuk disimpan.`);
         }
 
-        function muatTurunSenaraiPekerja() {
-            // Placeholder fungsi pemanggilan data pelayan/Google Sheets
-        }
-
-        function kemaskiniDashboardAnalisis() {
-            // Placeholder fungsi kemaskini statistik dashboard
-        }
-
-        function muatTurunSenaraiCuti() {
-            // Placeholder fungsi muat turun senarai cuti admin
+        function hantarPermohonanCuti() {
+            alert("Permohonan cuti berjaya dihantar.");
         }
 
         function rekodKehadiranSistem() {
