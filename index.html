@@ -307,8 +307,7 @@
 
         </div>
     </div>
-
-    <!-- SKRIP JAVASCRIPT UTAMA -->
+<!-- SKRIP JAVASCRIPT UTAMA -->
     <script>
         const urlWebApps = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
         const KATA_LALUAN_ADMIN = "admin123"; 
@@ -459,7 +458,9 @@
         function autoIsiCuti(selectElement) {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             document.getElementById('cuti-employee-id').value = selectElement.value;
-            document.getElementById('cuti-employee-name').value = selectedOption.getAttribute('data-name') || '';
+            // Dielakkan ralat jika elemen cuti-employee-name tidak wujud dalam HTML
+            const nameInput = document.getElementById('cuti-employee-name');
+            if(nameInput) nameInput.value = selectedOption.getAttribute('data-name') || '';
         }
 
         function hantarDataPekerja() {
@@ -476,8 +477,100 @@
             alert("Permohonan cuti berjaya dihantar.");
         }
 
-        function rekodKehadiranSistem() {
-            alert("Fungsi imbasan kehadiran sedang berjalan.");
+        // FUNGSI UTAMA SCAN & PADANKAN WAJAH
+        async function rekodKehadiranSistem() {
+            const videoEl = document.getElementById('webcam-scanner');
+            const statusKotak = document.getElementById('status-kotak');
+
+            if (!videoEl) {
+                alert("Kamera scanner tidak dijumpai.");
+                return;
+            }
+
+            statusKotak.innerHTML = `
+                <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 animate-spin">
+                    <i class="fa-solid fa-spinner text-xl"></i>
+                </div>
+                <h4 class="font-bold text-slate-800 text-sm">Sedang Mengesan Wajah...</h4>
+                <p class="text-[11px] text-slate-500 mt-1">Sila kekal tenang di hadapan kamera.</p>
+            `;
+
+            try {
+                // 1. Kesan wajah dan ciri-ciri dari video semasa
+                const detections = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detections) {
+                    statusKotak.innerHTML = `
+                        <div class="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-rose-600 text-sm">Wajah Tidak Dikesan!</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Pastikan pencahayaan cukup dan muka menghadap terus ke kamera.</p>
+                    `;
+                    return;
+                }
+
+                if (!senaraiPekerjaDB || senaraiPekerjaDB.length === 0) {
+                    alert("Data pekerja belum dimuat turun dari Google Sheets.");
+                    return;
+                }
+
+                // 2. Bandingkan dengan data wajah dalam pangkalan data
+                let identifiedWorker = null;
+                let lowestDistance = 0.6; // Had ralat padanan
+
+                for (const emp of senaraiPekerjaDB) {
+                    if (emp.faceData) {
+                        try {
+                            const parsedFaceData = JSON.parse(emp.faceData);
+                            const referenceDescriptor = new Float32Array(parsedFaceData);
+                            const distance = faceapi.euclideanDistance(detections.descriptor, referenceDescriptor);
+                            
+                            if (distance < lowestDistance) {
+                                lowestDistance = distance;
+                                identifiedWorker = emp;
+                            }
+                        } catch (e) {
+                            console.error("Ralat parsing data wajah untuk:", emp.employeeName);
+                        }
+                    }
+                }
+
+                // 3. Paparan Keputusan Padanan
+                if (identifiedWorker) {
+                    statusKotak.innerHTML = `
+                        <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-600/30">
+                            <i class="fa-solid fa-check text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-emerald-700 text-base">Berjaya Dikenal Pasti!</h4>
+                        <div class="mt-2 text-xs bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-slate-700 text-left">
+                            <p><b>Nama:</b> ${identifiedWorker.employeeName}</p>
+                            <p><b>ID:</b> ${identifiedWorker.employeeId}</p>
+                            <p><b>Jabatan:</b> ${identifiedWorker.department || '-'}</p>
+                        </div>
+                    `;
+                } else {
+                    statusKotak.innerHTML = `
+                        <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-user-xmark text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-amber-700 text-sm">Wajah Tidak Dikenali</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Sila pastikan anda sudah mendaftarkan wajah di menu pendaftaran.</p>
+                    `;
+                }
+
+            } catch (err) {
+                console.error("Ralat semasa imbasan:", err);
+                statusKotak.innerHTML = `
+                    <div class="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-rose-600 text-sm">Ralat Sistem Imbasan</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">Sila muat semula halaman pelayar anda.</p>
+                `;
+            }
         }
     </script>
 </body>
