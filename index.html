@@ -294,7 +294,7 @@
                     <div class="lg:col-span-6 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 flex flex-col items-center justify-center">
                         <div class="relative w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center mb-6">
                             <video id="webcam-register" autoplay playsinline muted class="w-full h-full object-cover"></video>
-                            <div class="absolute top3 left-3 bg-blue-600 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-full shadow">
+                            <div class="absolute top-3 left-3 bg-blue-600 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-full shadow">
                                 KAMERA PENDAFTARAN
                             </div>
                         </div>
@@ -458,7 +458,7 @@
             document.getElementById('empDepartment').value = found ? found.department : '';
         }
 
-        // Fungsi Utama: Imbas Wajah & Rekod Kehadiran Automatik ke Google Sheets
+        // Fungsi Utama: Imbas Wajah & Padankan dengan Data Google Sheets Menggunakan FaceMatcher
         async function rekodKehadiranSistem() {
             const videoEl = document.getElementById('webcam-scanner');
             const labelNama = document.getElementById('status-nama-pekerja');
@@ -472,7 +472,7 @@
             labelNama.innerText = "Mengecam Wajah...";
             ketStatus.innerText = "Sila kekal diam di hadapan kamera.";
 
-            // Mengesan muka menggunakan Face-API
+            // 1. Dikesan muka tunggal beserta descriptor wajah
             const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
 
             if (!detection) {
@@ -482,26 +482,60 @@
                 return;
             }
 
-            // Pastikan senarai pekerja tidak kosong
             if (!senaraiPekerjaData || senaraiPekerjaData.length === 0) {
-                alert("Data pekerja belum dimuat turun daripada Google Sheets. Sila semak sambungan.");
+                alert("Data pekerja belum dimuat turun daripada Google Sheets.");
                 return;
             }
 
-            // Ambil data pekerja pertama daripada senarai sebenar
-            let pekerjaDikesan = senaraiPekerjaData[0]; 
+            try {
+                // 2. Sediakan senarai rujukan wajah (LabeledFaceDescriptors) daripada Google Sheets
+                const labeledDescriptors = senaraiPekerjaData.map(emp => {
+                    if (emp.faceData) {
+                        try {
+                            const parsedData = JSON.parse(emp.faceData);
+                            const descriptor = new Float32Array(parsedData);
+                            return new faceapi.LabeledFaceDescriptors(emp.name, [descriptor]);
+                        } catch (e) {
+                            return null;
+                        }
+                    }
+                    return null;
+                }).filter(item => item !== null);
 
-            if (pekerjaDikesan && pekerjaDikesan.name) {
-                // Paparan nama sebenar pekerja pada kotak status
-                labelNama.innerText = `Berjaya: ${pekerjaDikesan.name}`;
-                ketStatus.innerHTML = `ID: <span class="font-bold text-blue-600">${pekerjaDikesan.id}</span> | Jabatan: ${pekerjaDikesan.department}`;
+                if (labeledDescriptors.length === 0) {
+                    alert("Tiada rekod 'Data Wajah' yang sah dijumpai dalam Google Sheets untuk dibuat perbandingan.");
+                    labelNama.innerText = "Tiada Data Wajah Rujukan";
+                    return;
+                }
 
-                // Panggil fungsi hantar rekod
-                hantarKeGoogleSheets(pekerjaDikesan);
-            } else {
-                labelNama.innerText = "Ralat: Data Pekerja Kosong";
-                ketStatus.innerText = "Sila semak tab 'Pekerja' di Google Sheets anda.";
-                alert("Ralat: Tiada maklumat pekerja ditemui dalam sistem.");
+                // 3. Bandingkan wajah menggunakan FaceMatcher (Threshold 0.6 untuk ketepatan)
+                const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+                const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+
+                if (bestMatch.label === 'unknown') {
+                    labelNama.innerText = "Wajah Tidak Dikenali!";
+                    ketStatus.innerText = "Sila daftar wajah anda terlebih dahulu di menu 'Daftar Wajah Pekerja'.";
+                    alert("Wajah anda tidak padan dengan mana-mana rekod pekerja dalam sistem.");
+                    return;
+                }
+
+                // 4. Cari maklumat pekerja berdasarkan nama yang sepadan
+                let pekerjaDikesan = senaraiPekerjaData.find(x => x.name === bestMatch.label);
+
+                if (pekerjaDikesan) {
+                    labelNama.innerText = `Berjaya: ${pekerjaDikesan.name}`;
+                    ketStatus.innerHTML = `ID: <span class="font-bold text-blue-600">${pekerjaDikesan.id}</span> | Jabatan: ${pekerjaDikesan.department}`;
+
+                    hantarKeGoogleSheets(pekerjaDikesan);
+                } else {
+                    labelNama.innerText = "Ralat Padanan Data";
+                    ketStatus.innerText = "Nama dijumpai tetapi maklumat pekerja tidak lengkap.";
+                }
+
+            } catch (err) {
+                console.error("Ralat semasa proses padanan wajah:", err);
+                labelNama.innerText = "Ralat Sistem AI";
+                ketStatus.innerText = "Sila cuba sekali lagi.";
             }
         }
 
