@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+   <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
@@ -171,39 +172,37 @@
             </div>
 
             <!-- 2. HALAMAN PERMOHONAN CUTI -->
-<div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
-    <div class="mb-8">
-        <h2 class="text-2xl font-extrabold text-slate-900">Borang Permohonan Cuti</h2>
-        <p class="text-xs text-slate-500 mt-1">Pekerja boleh mengisi butiran cuti di sini.</p>
-    </div>
-    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
-        <form id="leaveForm" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
-                    <!-- Ditukar kepada dropdown <select> dan ditambah fungsi onchange -->
-                    <select id="cuti-employee-id" onchange="pilihPekerjaCuti(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
-                        <option value="">Sila pilih ID Pekerja</option>
-                    </select>
+            <div id="page-cuti" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Borang Permohonan Cuti</h2>
+                    <p class="text-xs text-slate-500 mt-1">Pekerja boleh mengisi butiran cuti di sini.</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
-                    <!-- Ditukar kepada readonly supaya nama keluar automatik dari sistem -->
-                    <input type="text" id="cuti-employee-name" placeholder="Nama keluar automatik" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600 cursor-not-allowed" readonly required>
+                <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+                    <form id="leaveForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">ID Pekerja</label>
+                                <select id="cuti-employee-id" onchange="pilihPekerjaCuti(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
+                                    <option value="">Sila pilih ID Pekerja</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nama Penuh</label>
+                                <input type="text" id="cuti-employee-name" placeholder="Nama keluar automatik" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600 cursor-not-allowed" readonly required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Jenis Cuti</label>
+                            <select id="cuti-reason" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
+                                <option value="MC (Cuti Sakit)">MC (Cuti Sakit)</option>
+                                <option value="Cuti Rehat Khas">Cuti Rehat Khas</option>
+                                <option value="Sebab Lain">Sebab Lain</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition">Hantar Permohonan Cuti</button>
+                    </form>
                 </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Jenis Cuti</label>
-                <select id="cuti-reason" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500">
-                    <option value="MC (Cuti Sakit)">MC (Cuti Sakit)</option>
-                    <option value="Cuti Rehat Khas">Cuti Rehat Khas</option>
-                    <option value="Sebab Lain">Sebab Lain</option>
-                </select>
-            </div>
-            <button type="button" onclick="hantarPermohonanCuti()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition">Hantar Permohonan Cuti</button>
-        </form>
-    </div>
-</div>
 
             <!-- 2.1 HALAMAN KELULUSAN CUTI ADMIN -->
             <div id="page-kelulusan" class="p-6 md:p-10 max-w-4xl mx-auto w-full hidden">
@@ -314,17 +313,25 @@
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-5 bg-white rounded-3xl shadow-xl border border-slate-100 p-8 space-y-6">
                         <form id="employeeForm" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">ID Pekerja</label>
-                                <input type="text" id="empId" placeholder="EMP001" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
-                            </div>
+                            <!-- NAMA PENUH (DROPDOWN PEKERJA / GURU) -->
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Penuh</label>
-                                <input type="text" id="empName" placeholder="Nama Pekerja" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
+                                <select id="empName" onchange="pilihPekerjaDaftar(this)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
+                                    <option value="" selected disabled>-- Pilih Nama Guru / Pekerja --</option>
+                                    <option value="EMP001" data-nama="AHMAD MUBARAK" data-jabatan="AKADEMIK">AHMAD MUBARAK</option>
+                                    <option value="EMP002" data-nama="AHMAD MUBARAK FIKRI BIN CHE MUSTAFFA" data-jabatan="AKADEMIK">AHMAD MUBARAK FIKRI BIN CHE MUSTAFFA</option>
+                                    <option value="EMP003" data-nama="SITI NURHALIZA BINTI ALI" data-jabatan="PENTADBIRAN">SITI NURHALIZA BINTI ALI</option>
+                                </select>
                             </div>
+                            <!-- ID PEKERJA (AUTO-FILL & READONLY) -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">ID Pekerja</label>
+                                <input type="text" id="empId" placeholder="ID Pekerja" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600 cursor-not-allowed" readonly>
+                            </div>
+                            <!-- JABATAN (AUTO-FILL & READONLY) -->
                             <div>
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Jabatan</label>
-                                <input type="text" id="empDepartment" placeholder="Jabatan..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm">
+                                <input type="text" id="empDepartment" placeholder="Jabatan..." class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600 cursor-not-allowed" readonly>
                             </div>
                         </form>
                     </div>
@@ -332,7 +339,7 @@
                         <div class="bg-slate-900 rounded-2xl overflow-hidden h-72 flex items-center justify-center relative mb-6">
                             <video id="webcam-register" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
                         </div>
-                        <button type="button" onclick="hantarDataPekerja()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg">Simpan Wajah & Profil Pekerja</button>
+                        <button type="button" onclick="hantarDataPekerja()" class="w-full py-4 rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-lg hover:bg-blue-700 transition">Simpan Wajah & Profil Pekerja</button>
                     </div>
                 </div>
             </div>
@@ -340,7 +347,57 @@
         </div>
     </div>
 
-<!-- JavaScript Logik -->
+    <!-- SKRIP JAVASCRIPT UTAMA -->
+    <script>
+        // Fungsi untuk Auto-Fill ID Pekerja & Jabatan apabila Nama dipilih dari dropdown
+        function pilihPekerjaDaftar(selectElement) {
+            const empIdInput = document.getElementById('empId');
+            const empDepartmentInput = document.getElementById('empDepartment');
+            
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            
+            if (selectElement.value) {
+                empIdInput.value = selectElement.value;
+                empDepartmentInput.value = selectedOption.getAttribute('data-jabatan') || '';
+            } else {
+                empIdInput.value = '';
+                empDepartmentInput.value = '';
+            }
+        }
+
+        // Fungsi Penukaran Halaman (Navigation)
+        function tukarHalaman(pageId) {
+            const pages = ['kehadiran', 'cuti', 'kelulusan', 'dashboard', 'pekerja'];
+            pages.forEach(p => {
+                const el = document.getElementById('page-' + p);
+                if (el) el.classList.add('hidden');
+                
+                const nav = document.getElementById('nav-' + p);
+                if (nav) {
+                    nav.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
+                    nav.classList.add('text-slate-300');
+                }
+            });
+
+            const activePage = document.getElementById('page-' + pageId);
+            if (activePage) activePage.classList.remove('hidden');
+
+            const activeNav = document.getElementById('nav-' + pageId);
+            if (activeNav) {
+                activeNav.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+                activeNav.classList.remove('text-slate-300');
+            }
+        }
+
+        // Toggle Sidebar Mobile
+        function toggleSidebarMobile() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+    </script>
+</body>
+</html>                        
+<--JavaScript Logik -->
     <script>
         const urlWebApps = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
         const KATA_LALUAN_ADMIN = "admin123"; 
