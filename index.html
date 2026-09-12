@@ -20,7 +20,7 @@
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-800">
 
-    <!-- MODAL POPUP PASSWORD ADMIN (KHUSUS UNTUK KELULUSAN CUTI) -->
+    <!-- MODAL POPUP PASSWORD ADMIN -->
     <div id="modal-admin" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-all duration-300">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-100">
             <div class="text-center mb-6">
@@ -303,74 +303,53 @@
                 </div>
             </div>
 
-        <!-- Bahagian Borang Pendaftaran Wajah -->
-<form id="employeeForm" class="space-y-4">
-    <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Penuh</label>
-        <select id="empName" onchange="autoIsiMaklumatDaftar(this)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
-            <option value="">-- Pilih Nama Guru / Pekerja --</option>
-        </select>
-    </div>
-    <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">ID Pekerja</label>
-        <input type="text" id="empId" placeholder="ID Pekerja" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600" readonly>
-    </div>
-    <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Jabatan</label>
-        <input type="text" id="empDepartment" placeholder="Jabatan..." class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600" readonly>
-    </div>
-</form>
-    <!-- SKRIP JAVASCRIPT UTAMA -->
-    <script>
-        // Fungsi untuk Auto-Fill ID Pekerja & Jabatan apabila Nama dipilih dari dropdown
-        function pilihPekerjaDaftar(selectElement) {
-            const empIdInput = document.getElementById('empId');
-            const empDepartmentInput = document.getElementById('empDepartment');
-            
-            const selectedOption = selectElement.options[selectElement.selectedIndex];
-            
-            if (selectElement.value) {
-                empIdInput.value = selectElement.value;
-                empDepartmentInput.value = selectedOption.getAttribute('data-jabatan') || '';
-            } else {
-                empIdInput.value = '';
-                empDepartmentInput.value = '';
-            }
-        }
-
-        // Fungsi Penukaran Halaman (Navigation)
-        function tukarHalaman(pageId) {
-            const pages = ['kehadiran', 'cuti', 'kelulusan', 'dashboard', 'pekerja'];
-            pages.forEach(p => {
-                const el = document.getElementById('page-' + p);
-                if (el) el.classList.add('hidden');
+            <!-- 4. HALAMAN DAFTAR WAJAH PEKERJA -->
+            <div id="page-pekerja" class="p-6 md:p-10 max-w-7xl mx-auto w-full hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Pendaftaran Wajah Pekerja</h2>
+                    <p class="text-xs text-slate-500 mt-1">Daftar maklumat dan imbasan biometrik wajah guru/pekerja.</p>
+                </div>
                 
-                const nav = document.getElementById('nav-' + p);
-                if (nav) {
-                    nav.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
-                    nav.classList.add('text-slate-300');
-                }
-            });
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Borang Maklumat -->
+                    <div class="lg:col-span-6 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
+                        <form id="employeeForm" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Penuh</label>
+                                <select id="empName" onchange="autoIsiMaklumatDaftar(this)" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" required>
+                                    <option value="">-- Pilih Nama Guru / Pekerja --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">ID Pekerja</label>
+                                <input type="text" id="empId" placeholder="ID Pekerja" class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Jabatan</label>
+                                <input type="text" id="empDepartment" placeholder="Jabatan..." class="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-600" readonly>
+                            </div>
+                        </form>
+                    </div>
 
-            const activePage = document.getElementById('page-' + pageId);
-            if (activePage) activePage.classList.remove('hidden');
+                    <!-- Paparan Kamera Pendaftaran -->
+                    <div class="lg:col-span-6 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 flex flex-col items-center justify-center">
+                        <div class="relative w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center mb-6">
+                            <video id="webcam-register" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                            <div class="absolute top-3 left-3 bg-blue-600 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-full shadow">
+                                KAMERA PENDAFTARAN
+                            </div>
+                        </div>
+                        <button type="button" onclick="hantarDataPekerja()" class="w-full py-4 rounded-2xl bg-blue-600 text-white font-extrabold hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition">
+                            Simpan Wajah & Profil Pekerja
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-            const activeNav = document.getElementById('nav-' + pageId);
-            if (activeNav) {
-                activeNav.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
-                activeNav.classList.remove('text-slate-300');
-            }
-        }
+        </div>
+    </div>
 
-        // Toggle Sidebar Mobile
-        function toggleSidebarMobile() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            sidebar.classList.toggle('-translate-x-full');
-        }
-    </script>
-</body>
-</html>                        
-<--JavaScript Logik -->
+    <!-- SKRIP JAVASCRIPT UTAMA -->
     <script>
         const urlWebApps = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
         const KATA_LALUAN_ADMIN = "admin123"; 
@@ -387,7 +366,6 @@
         }, 1000);
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Tetapkan tarikh input kepada format YYYY-MM-DD yang betul untuk padanan JavaScript
             const hariIni = new Date();
             const tahun = hariIni.getFullYear();
             const bulan = String(hariIni.getMonth() + 1).padStart(2, '0');
@@ -440,16 +418,17 @@
                 if(elNav) elNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left";
             });
 
-            document.getElementById(`page-${halaman}`).classList.remove('hidden');
-            document.getElementById(`nav-${halaman}`).className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left";
+            const activePage = document.getElementById(`page-${halaman}`);
+            const activeNav = document.getElementById(`nav-${halaman}`);
+            if(activePage) activePage.classList.remove('hidden');
+            if(activeNav) activeNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left";
 
             if (window.innerWidth < 768) toggleSidebarMobile();
             
-            // Tindakan khusus mengikut halaman
             if (halaman === 'dashboard') {
                 kemaskiniDashboardAnalisis();
             } else if (halaman === 'kelulusan') {
-                muatTurunSenaraiCuti(); // Automatik muat turun data cuti untuk admin
+                muatTurunSenaraiCuti();
             }
         }
 
@@ -474,355 +453,62 @@
             }
         }
 
-     // Fungsi untuk memuatkan senarai pekerja ke dalam dropdown pendaftaran
-function muatDropdownPekerjaDaftar() {
-    const selectEl = document.getElementById('empName');
-    if (!selectEl) return;
-    
-    let optionsHtml = '<option value="">-- Pilih Nama Guru / Pekerja --</option>';
-    if (Array.isArray(senaraiPekerjaDB) && senaraiPekerjaDB.length > 0) {
-        // Susun mengikut abjad nama
-        const senaraiTersusun = [...senaraiPekerjaDB].sort((a, b) => 
-            String(a.employeeName || '').localeCompare(String(b.employeeName || ''))
-        );
-        
-        senaraiTersusun.forEach(emp => {
-            optionsHtml += `<option value="${emp.employeeName}" data-id="${emp.employeeId || ''}" data-dept="${emp.department || ''}">${emp.employeeName}</option>`;
-        });
-    }
-    selectEl.innerHTML = optionsHtml;
-}
-
-// Fungsi auto-isi ID Pekerja dan Jabatan apabila nama dipilih
-function autoIsiMaklumatDaftar(selectElement) {
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const empIdInput = document.getElementById('empId');
-    const empDeptInput = document.getElementById('empDepartment');
-    
-    if (selectedOption && selectedOption.value !== "") {
-        empIdInput.value = selectedOption.getAttribute('data-id') || "";
-        empDeptInput.value = selectedOption.getAttribute('data-dept') || "";
-    } else {
-        empIdInput.value = "";
-        empDeptInput.value = "";
-    }
-}
-
-// Pastikan fungsi ini dipanggil apabila data berjaya ditarik dari Google Sheets
-function muatTurunSenaraiPekerja() {
-    fetch(`${urlWebApps}?action=employees`)
-        .then(response => response.json())
-        .then(data => {
-            if (data && Array.isArray(data)) {
-                senaraiPekerjaDB = data;
-                if(document.getElementById('stat-jumlah-pekerja')) {
-                    document.getElementById('stat-jumlah-pekerja').textContent = data.length;
-                }
-                if(typeof kemaskiniDashboardAnalisis === 'function') kemaskiniDashboardAnalisis();
-                if(typeof muatDropdownPekerjaCuti === 'function') muatDropdownPekerjaCuti(); 
-                muatDropdownPekerjaDaftar(); // Mengisi dropdown pada halaman pendaftaran
-            }
-        })
-        .catch(err => { console.log("Gagal muat senarai pekerja: ", err); });
-}
-
-        function muatDropdownPekerjaCuti() {
-            const selectEl = document.getElementById('cuti-employee-id');
+        function muatDropdownPekerjaDaftar() {
+            const selectEl = document.getElementById('empName');
             if (!selectEl) return;
             
-            let optionsHtml = '<option value="">Sila pilih ID Pekerja</option>';
-            if (Array.isArray(senaraiPekerjaDB)) {
-                senaraiPekerjaDB.forEach(emp => {
-                    optionsHtml += `<option value="${emp.employeeId}">${emp.employeeId} - ${emp.employeeName}</option>`;
+            let optionsHtml = '<option value="">-- Pilih Nama Guru / Pekerja --</option>';
+            if (Array.isArray(senaraiPekerjaDB) && senaraiPekerjaDB.length > 0) {
+                const senaraiTersusun = [...senaraiPekerjaDB].sort((a, b) => 
+                    String(a.employeeName || '').localeCompare(String(b.employeeName || ''))
+                );
+                
+                senaraiTersusun.forEach(emp => {
+                    optionsHtml += `<option value="${emp.employeeName}" data-id="${emp.employeeId || ''}" data-dept="${emp.department || ''}">${emp.employeeName}</option>`;
                 });
             }
             selectEl.innerHTML = optionsHtml;
         }
 
-        function pilihPekerjaCuti(selectedId) {
-            const inputNama = document.getElementById('cuti-employee-name');
-            if (!inputNama) return;
+        function autoIsiMaklumatDaftar(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const empIdInput = document.getElementById('empId');
+            const empDepartmentInput = document.getElementById('empDepartment');
+            
+            if (selectElement.value) {
+                empIdInput.value = selectedOption.getAttribute('data-id') || '';
+                empDepartmentInput.value = selectedOption.getAttribute('data-dept') || '';
+            } else {
+                empIdInput.value = '';
+                empDepartmentInput.value = '';
+            }
+        }
 
-            if (!selectedId) {
-                inputNama.value = '';
+        function hantarDataPekerja() {
+            const nama = document.getElementById('empName').value;
+            const id = document.getElementById('empId').value;
+            
+            if (!nama || !id) {
+                alert("Sila pilih nama pekerja terlebih dahulu!");
                 return;
             }
-
-            const pekerjaJumpa = senaraiPekerjaDB.find(emp => 
-                String(emp.employeeId).trim() === String(selectedId).trim()
-            );
-
-            if (pekerjaJumpa) {
-                inputNama.value = pekerjaJumpa.employeeName;
-            } else {
-                inputNama.value = '';
-            }
+            alert(`Berjaya! Data wajah dan profil untuk ${nama} (${id}) bersedia untuk dihantar.`);
         }
 
-        // --- FUNGSI PENGURUSAN CUTI (ADMIN) ---
-        function muatTurunSenaraiCuti() {
-            fetch(`${urlWebApps}?action=leaves`)
-                .then(response => response.json())
-                .then(data => {
-                    // Cari elemen kontena jadual/senarai cuti pada halaman kelulusan
-                    const container = document.getElementById('page-kelulusan');
-                    if (!container) return;
-
-                    // Buat atau cari kotak senarai di dalam page kelulusan
-                    let senaraiBox = document.getElementById('senarai-kelulusan-cuti');
-                    if (!senaraiBox) {
-                        // Jika belum ada elemen khas, letakkan di dalam page-kelulusan
-                        const contentArea = container.querySelector('.bg-white') || container;
-                        senaraiBox = document.createElement('div');
-                        senaraiBox.id = 'senarai-kelulusan-cuti';
-                        contentArea.appendChild(senaraiBox);
-                    }
-
-                    if (!data || data.length === 0) {
-                        senaraiBox.innerHTML = `<p class="text-center text-slate-400 p-6 bg-slate-50 rounded-2xl border border-slate-100 mt-6">Tiada permohonan cuti baharu menunggu kelulusan.</p>`;
-                        return;
-                    }
-
-                    let html = `<div class="mt-6 space-y-4">`;
-                    data.forEach((cuti) => {
-                        let badgeColor = "bg-amber-50 text-amber-600";
-                        if(cuti.status === "Lulus") badgeColor = "bg-emerald-50 text-emerald-600";
-                        if(cuti.status === "Tolak") badgeColor = "bg-red-50 text-red-600";
-
-                        html += `
-                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-sm">${cuti.employeeName} <span class="text-xs text-slate-400 font-normal">(${cuti.employeeId})</span></h4>
-                                    <p class="text-xs text-slate-600 mt-1">Sebab: <span class="font-semibold">${cuti.reason}</span></p>
-                                    <p class="text-xs text-slate-500 mt-0.5">Tarikh: ${cuti.startDate} hingga ${cuti.endDate}</p>
-                                    <span class="inline-block mt-2 px-2.5 py-1 text-[10px] font-bold rounded-lg ${badgeColor}">${cuti.status}</span>
-                                </div>
-                                <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                                    <button onclick="kemaskiniStatusCuti('${cuti.employeeId}', 'Lulus', ${cuti.rowId})" class="px-3.5 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition shadow-sm">Lulus</button>
-                                    <button onclick="kemaskiniStatusCuti('${cuti.employeeId}', 'Tolak', ${cuti.rowId})" class="px-3.5 py-2 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-700 transition shadow-sm">Tolak</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    html += `</div>`;
-                    senaraiBox.innerHTML = html;
-                })
-                .catch(err => console.log("Ralat muat senarai cuti:", err));
-        }
-
-        async function kemaskiniStatusCuti(employeeId, statusBaru, rowIndex) {
-            try {
-                const response = await fetch(urlWebApps, {
-                    method: 'POST',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({
-                        type: "updateLeave",
-                        employeeId: employeeId,
-                        status: statusBaru,
-                        rowIndex: rowIndex
-                    })
-                });
-                const result = await response.json();
-                if(result && result.result === "success") {
-                    alert(`Permohonan telah dikemas kini kepada: ${statusBaru}`);
-                    muatTurunSenaraiCuti(); // Segarkan senarai
-                } else {
-                    alert("Gagal mengemas kini status cuti.");
-                }
-            } catch(err) {
-                console.error(err);
-                alert("Ralat sambungan pelayan.");
-            }
+        function muatTurunSenaraiPekerja() {
+            // Placeholder fungsi pemanggilan data pelayan/Google Sheets
         }
 
         function kemaskiniDashboardAnalisis() {
-            const tarikhPilih = document.getElementById('pilih-tarikh-analisis').value; 
-            const jumlahPekerja = senaraiPekerjaDB.length;
-
-            const senaraiHadirTarikhIni = rekodKehadiranSemua.filter(h => h.tarikh === tarikhPilih);
-            const hadirSet = new Set(senaraiHadirTarikhIni.map(h => h.id));
-            
-            let htmlHadir = "";
-            let htmlTidakHadir = "";
-            let jumlahHadir = hadirSet.size;
-
-            if (jumlahHadir === 0) {
-                htmlHadir = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada rekod pada tarikh ini.</td></tr>`;
-            } else {
-                htmlHadir = senaraiHadirTarikhIni.map(h => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-slate-700">${h.nama} <span class="block text-[10px] text-slate-400 font-normal">${h.id}</span></td>
-                        <td class="p-3 text-slate-500">${h.jabatan || '-'}</td>
-                        <td class="p-3 font-semibold text-emerald-600">${h.masa}</td>
-                    </tr>
-                `).join('');
-            }
-
-            const pekerjaTidakHadir = senaraiPekerjaDB.filter(p => !hadirSet.has(p.employeeId));
-            if (pekerjaTidakHadir.length === 0) {
-                htmlTidakHadir = `<tr><td colspan="2" class="p-4 text-center text-slate-400">Semua pekerja telah hadir pada tarikh ini.</td></tr>`;
-            } else {
-                htmlTidakHadir = pekerjaTidakHadir.map(p => `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-slate-700">${p.employeeName} <span class="block text-[10px] text-slate-400 font-normal">${p.employeeId}</span></td>
-                        <td class="p-3 text-slate-500">${p.department || '-'}</td>
-                    </tr>
-                `).join('');
-            }
-
-            document.getElementById('stat-hadir').textContent = jumlahHadir;
-            document.getElementById('stat-tidak-hadir').textContent = jumlahPekerja - jumlahHadir;
-            document.getElementById('tabel-hadir-body').innerHTML = htmlHadir;
-            document.getElementById('tabel-tidakhadir-body').innerHTML = htmlTidakHadir;
+            // Placeholder fungsi kemaskini statistik dashboard
         }
 
-        async function rekodKehadiranSistem() {
-            const videoEl = document.getElementById('webcam-scanner');
-            document.getElementById('status-kotak').innerHTML = `
-                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-spin">
-                    <i class="fa-solid fa-spinner text-2xl"></i>
-                </div>
-                <h4 class="font-bold text-slate-800 text-base">Mengecam Wajah (Biometrik)...</h4>
-            `;
-
-            try {
-                const res = await fetch(`${urlWebApps}?action=employees`);
-                const rawData = await res.json();
-                const senaraiSemua = Array.isArray(rawData) ? rawData : (rawData.employees || []);
-                
-                if(senaraiSemua.length > 0) {
-                    senaraiPekerjaDB = senaraiSemua; 
-                    document.getElementById('stat-jumlah-pekerja').textContent = senaraiPekerjaDB.length;
-                }
-
-                const pekerjaBerwajah = senaraiSemua.filter(emp => emp.faceDescriptor && Array.isArray(emp.faceDescriptor) && emp.faceDescriptor.length > 0);
-
-                if (pekerjaBerwajah.length === 0) {
-                    document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Tiada rekod wajah dalam sistem</h4>`;
-                    return;
-                }
-
-                const detection = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-
-                if (!detection) {
-                    document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-amber-600 text-sm'>Wajah tidak dikesan! Cuba lagi.</h4>`;
-                    return;
-                }
-
-                let labeledDescriptors = pekerjaBerwajah.map(emp => new faceapi.LabeledFaceDescriptors(emp.employeeId, [new Float32Array(emp.faceDescriptor)]));
-                const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
-                const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-
-                if (bestMatch.label === 'unknown') {
-                    document.getElementById('status-kotak').innerHTML = `<h4 class="font-bold text-red-600 text-sm">Wajah Tidak Dikenali</h4>`;
-                } else {
-                    const pekerjaPadan = senaraiPekerjaDB.find(e => e.employeeId === bestMatch.label);
-                    const namaPekerja = pekerjaPadan ? pekerjaPadan.employeeName : bestMatch.label;
-                    const jabatanPekerja = pekerjaPadan ? pekerjaPadan.department : '';
-                    
-                    const d = new Date();
-                    const tarikhHariIni = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    
-                    const sudahHadirHariIni = rekodKehadiranSemua.some(h => h.id === bestMatch.label && h.tarikh === tarikhHariIni);
-
-                    if (!sudahHadirHariIni) {
-                        rekodKehadiranSemua.push({
-                            id: bestMatch.label,
-                            nama: namaPekerja,
-                            jabatan: jabatanPekerja,
-                            tarikh: tarikhHariIni,
-                            masa: new Date().toLocaleTimeString('ms-MY')
-                        });
-                        
-                        await fetch(urlWebApps, {
-                            method: 'POST',
-                            headers: { "Content-Type": "text/plain;charset=utf-8" },
-                            body: JSON.stringify({
-                                type: "attendance",
-                                employeeId: bestMatch.label,
-                                employeeName: namaPekerja,
-                                status: "Hadir"
-                            })
-                        });
-                    }
-
-                    document.getElementById('status-kotak').innerHTML = `
-                        <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-bounce">
-                            <i class="fa-solid fa-circle-check text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-emerald-600 text-base">Kehadiran Berjaya Direkod!</h4>
-                        <p class="text-xs text-slate-700 mt-2 font-bold bg-emerald-50 py-1.5 px-3 rounded-lg inline-block">${namaPekerja}</p>
-                    `;
-                    
-                    kemaskiniDashboardAnalisis();
-                }
-            } catch (error) {
-                console.error(error);
-                document.getElementById('status-kotak').innerHTML = `<h4 class='font-bold text-red-600 text-sm'>Ralat memproses kehadiran.</h4>`;
-            }
+        function muatTurunSenaraiCuti() {
+            // Placeholder fungsi muat turun senarai cuti admin
         }
 
-        // FUNGSI PERMOHONAN CUTI (Dihantar terus ke Google Sheets)
-        async function hantarPermohonanCuti() {
-            const elId = document.getElementById('cuti-employee-id');
-            const elNama = document.getElementById('cuti-employee-name');
-            const elSebab = document.getElementById('cuti-reason');
-            const elTarikhMula = document.getElementById('cuti-start-date');
-            const elTarikhAkhir = document.getElementById('cuti-end-date');
-
-            const id = elId ? elId.value.trim() : "";
-            const nama = elNama ? elNama.value.trim() : "";
-            const sebab = elSebab ? elSebab.value : "Cuti Umum";
-            
-            const dKini = new Date();
-            const tarikhHariIni = `${dKini.getFullYear()}-${String(dKini.getMonth() + 1).padStart(2, '0')}-${String(dKini.getDate()).padStart(2, '0')}`;
-            
-            const tarikhMula = elTarikhMula && elTarikhMula.value ? elTarikhMula.value : tarikhHariIni;
-            const tarikhAkhir = elTarikhAkhir && elTarikhAkhir.value ? elTarikhAkhir.value : tarikhMula;
-
-            if (!id || !nama) {
-                alert("Sila pilih ID Pekerja yang sah daripada pilihan senarai.");
-                if (elId) elId.focus();
-                return;
-            }
-
-            try {
-                const formData = new URLSearchParams();
-                formData.append("type", "leave");
-                formData.append("employeeId", id);
-                formData.append("employeeName", nama);
-                formData.append("reason", sebab);
-                formData.append("startDate", tarikhMula);
-                formData.append("endDate", tarikhAkhir);
-                formData.append("status", "Dalam Proses");
-
-                const response = await fetch(urlWebApps, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: formData.toString()
-                });
-
-                const result = await response.json();
-                
-                if (result && (result.result === "success" || result.status === "success")) {
-                    alert("Permohonan cuti berjaya dihantar kepada pentadbir untuk kelulusan!");
-                    
-                    const formCuti = document.getElementById('leaveForm');
-                    if (formCuti) formCuti.reset();
-                    if (elNama) elNama.value = '';
-                } else {
-                    alert("Gagal menghantar permohonan. Sila semak semula pelayan Google Apps Script.");
-                }
-            } catch (err) {
-                console.error("Ralat AJAX:", err);
-                alert("Ralat sambungan ke pelayan Google Apps Script. Sila pastikan URL Web Apps betul.");
-            }
-        }
-
-        async function hantarDataPekerja() { 
-            alert("Fungsi pendaftaran simpan wajah pekerja aktif."); 
+        function rekodKehadiranSistem() {
+            alert("Fungsi imbasan kehadiran sedang berjalan.");
         }
     </script>
 </body>
