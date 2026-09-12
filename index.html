@@ -308,18 +308,54 @@
         </div>
     </div>
 
-    <!-- SKRIP KAWALAN SISTEM -->
+    <!-- SKRIP KAWALAN SISTEM & GOOGLE SHEETS INTEGRATION -->
     <script>
-        const senaraiPekerjaData = [
-            { id: "EMP001", name: "Ahmad bin Ali", department: "Pentadbiran" },
-            { id: "EMP002", name: "Siti binti Abu", department: "Akademik" }
-        ];
+        let senaraiPekerjaData = [];
+        const SPREADSHEET_ID = "18Cm-b6hZNsZypjROgQP3hYNyaT7UbQZ6zM9JowXytzo";
 
         document.addEventListener("DOMContentLoaded", () => {
-            muatSenaraiPekerjaDropdown();
+            muatDataDariGoogleSheets();
             mulakanJamSemasa();
             aktifkanKamera();
         });
+
+        // Tarik Data dari Tab 'Pekerja' Google Sheets
+        async function muatDataDariGoogleSheets() {
+            try {
+                // Menggunakan paparan gviz spreadsheet awam untuk mengambil data tab bernama 'Pekerja'
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Pekerja`;
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                // Pembersihan format output gviz Google Sheets kepada JSON biasa
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                const rows = json.table.rows;
+
+                senaraiPekerjaData = rows.map(row => {
+                    return {
+                        id: row.c[0] ? row.c[0].v : '',          // Kolum 1: ID Pekerja
+                        name: row.c[1] ? row.c[1].v : '',        // Kolum 2: Nama Penuh
+                        department: row.c[2] ? row.c[2].v : '',  // Kolum 3: Jabatan
+                        position: row.c[3] ? row.c[3].v : '',    // Kolum 4: Jawatan
+                        faceData: row.c[4] ? row.c[4].v : ''     // Kolum 5: Data Wajah
+                    };
+                }).filter(emp => emp.name !== ""); // Tap keluar baris kosong
+
+                muatSenaraiPekerjaDropdown();
+                const statJumlah = document.getElementById('stat-jumlah-pekerja');
+                if(statJumlah) statJumlah.innerText = senaraiPekerjaData.length;
+
+                console.log("Data berjaya ditarik dari Google Sheets:", senaraiPekerjaData);
+            } catch (err) {
+                console.error("Ralat menarik data Google Sheets:", err);
+                // Data sandaran (fallback) sekiranya Google Sheets gagal diakses
+                senaraiPekerjaData = [
+                    { id: "EMP001", name: "Ahmad bin Ali", department: "Pentadbiran", position: "Kerani" },
+                    { id: "EMP002", name: "Siti binti Abu", department: "Akademik", position: "Guru" }
+                ];
+                muatSenaraiPekerjaDropdown();
+            }
+        }
 
         function tukarHalaman(pageId) {
             const pages = ['dashboard', 'kehadiran', 'cuti', 'kelulusan', 'pekerja'];
@@ -389,6 +425,9 @@
             const selectCuti = document.getElementById('cuti-employee-select');
             const selectDaftar = document.getElementById('empName');
             
+            if (selectCuti) selectCuti.innerHTML = '<option value="">-- Pilih Nama --</option>';
+            if (selectDaftar) selectDaftar.innerHTML = '<option value="">-- Pilih Nama Guru / Pekerja --</option>';
+
             senaraiPekerjaData.forEach(emp => {
                 if (selectCuti) {
                     let opt = document.createElement('option');
@@ -448,7 +487,8 @@
         }
 
         function muatTurunSenaraiPekerja() {
-            alert("Data dikemaskini.");
+            muatDataDariGoogleSheets();
+            alert("Data dikemaskini dari Google Sheets.");
         }
     </script>
 </body>
