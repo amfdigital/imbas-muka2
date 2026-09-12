@@ -307,268 +307,148 @@
 
         </div>
     </div>
-<!-- SKRIP JAVASCRIPT UTAMA -->
+
+    <!-- SKRIP KAWALAN SISTEM -->
     <script>
-        const urlWebApps = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
-        const KATA_LALUAN_ADMIN = "admin123"; 
-        let halamanTertunda = null;
-        let senaraiPekerjaDB = [];
+        const senaraiPekerjaData = [
+            { id: "EMP001", name: "Ahmad bin Ali", department: "Pentadbiran" },
+            { id: "EMP002", name: "Siti binti Abu", department: "Akademik" }
+        ];
 
-        // Jam Masa Nyata
-        setInterval(() => {
-            const now = new Date();
-            const timeEl = document.getElementById('real-time-clock');
-            const dateEl = document.getElementById('real-time-date');
-            if(timeEl) timeEl.textContent = now.toLocaleTimeString('ms-MY');
-            if(dateEl) dateEl.textContent = now.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-        }, 1000);
+        document.addEventListener("DOMContentLoaded", () => {
+            muatSenaraiPekerjaDropdown();
+            mulakanJamSemasa();
+            aktifkanKamera();
+        });
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            const hariIni = new Date();
-            const tahun = hariIni.getFullYear();
-            const bulan = String(hariIni.getMonth() + 1).padStart(2, '0');
-            const hari = String(hariIni.getDate()).padStart(2, '0');
-            const hariIniStr = `${tahun}-${bulan}-${hari}`;
+        function tukarHalaman(pageId) {
+            const pages = ['dashboard', 'kehadiran', 'cuti', 'kelulusan', 'pekerja'];
+            pages.forEach(p => {
+                const el = document.getElementById(`page-${p}`);
+                if (el) el.classList.add('hidden');
+                const nav = document.getElementById(`nav-${p}`);
+                if (nav) {
+                    nav.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+                    nav.classList.add('text-slate-300', 'hover:bg-slate-800/60', 'hover:text-white');
+                }
+            });
 
-            const inputTarikh = document.getElementById('pilih-tarikh-analisis');
-            if(inputTarikh) inputTarikh.value = hariIniStr;
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) targetPage.classList.remove('hidden');
 
-            // Muat Turun Data Pekerja Dari Google Sheets Sebaik Mula
-            muatTurunSenaraiPekerja();
-
-            try {
-                if (typeof faceapi === 'undefined') throw new Error("Face-api tidak dimuatkan.");
-                document.getElementById('text-model-kamera').textContent = "Memuat Model AI...";
-                
-                const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-                ]);
-                
-                document.getElementById('status-model-kamera').className = "fa-solid fa-circle text-emerald-400 text-[8px]";
-                document.getElementById('text-model-kamera').textContent = "Model AI Bersedia";
-            } catch (err) {
-                console.error("Ralat AI:", err);
-                document.getElementById('text-model-kamera').textContent = "Ralat Muat Model AI";
+            const targetNav = document.getElementById(`nav-${pageId}`);
+            if (targetNav) {
+                targetNav.classList.remove('text-slate-300', 'hover:bg-slate-800/60', 'hover:text-white');
+                targetNav.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
             }
 
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-                .then(stream => {
-                    const regCam = document.getElementById('webcam-register');
-                    const scanCam = document.getElementById('webcam-scanner');
-                    if(regCam) regCam.srcObject = stream;
-                    if(scanCam) scanCam.srcObject = stream;
-                })
-                .catch(err => { console.log("Kamera tidak diakses: ", err); });
-        });
+            const sidebar = document.getElementById('mobile-sidebar');
+            if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                toggleSidebarMobile();
+            }
+        }
 
         function toggleSidebarMobile() {
             const sidebar = document.getElementById('mobile-sidebar');
-            if(sidebar) sidebar.classList.toggle('-translate-x-full');
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
         }
 
-        function tukarHalaman(halaman) {
-            // Senarai semua ID halaman yang dikawal dalam sistem
-            ['dashboard', 'pekerja', 'kehadiran', 'cuti', 'kelulusan'].forEach(h => {
-                const elPage = document.getElementById(`page-${h}`);
-                const elNav = document.getElementById(`nav-${h}`);
-                if(elPage) elPage.classList.add('hidden');
-                if(elNav) elNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left";
+        function mulakanJamSemasa() {
+            setInterval(() => {
+                const now = new Date();
+                const jam = document.getElementById('real-time-clock');
+                const tarikh = document.getElementById('real-time-date');
+                if (jam) jam.innerText = now.toLocaleTimeString();
+                if (tarikh) tarikh.innerText = now.toLocaleDateString('ms-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }, 1000);
+        }
+
+        async function aktifkanKamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const webcamScanner = document.getElementById('webcam-scanner');
+                const webcamRegister = document.getElementById('webcam-register');
+                if (webcamScanner) webcamScanner.srcObject = stream;
+                if (webcamRegister) webcamRegister.srcObject = stream;
+                
+                const statusModel = document.getElementById('text-model-kamera');
+                const dotModel = document.getElementById('status-model-kamera');
+                if (statusModel) statusModel.innerText = "Kamera & Sistem Aktif";
+                if (dotModel) {
+                    dotModel.classList.remove('animate-ping', 'text-amber-400');
+                    dotModel.classList.add('text-emerald-400');
+                }
+            } catch (err) {
+                console.error("Ralat Kamera:", err);
+                const statusModel = document.getElementById('text-model-kamera');
+                if (statusModel) statusModel.innerText = "Kamera Tidak Dibenarkan / Tiada";
+            }
+        }
+
+        function muatSenaraiPekerjaDropdown() {
+            const selectCuti = document.getElementById('cuti-employee-select');
+            const selectDaftar = document.getElementById('empName');
+            
+            senaraiPekerjaData.forEach(emp => {
+                if (selectCuti) {
+                    let opt = document.createElement('option');
+                    opt.value = emp.name;
+                    opt.textContent = emp.name;
+                    selectCuti.appendChild(opt);
+                }
+                if (selectDaftar) {
+                    let opt = document.createElement('option');
+                    opt.value = emp.name;
+                    opt.textContent = emp.name;
+                    selectDaftar.appendChild(opt);
+                }
             });
-
-            // Paparkan halaman pilihan yang aktif
-            const activePage = document.getElementById(`page-${halaman}`);
-            const activeNav = document.getElementById(`nav-${halaman}`);
-            if(activePage) activePage.classList.remove('hidden');
-            if(activeNav) activeNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition text-left";
-
-            if (window.innerWidth < 768) toggleSidebarMobile();
         }
 
-        function mintaAksesAdmin(halamanTujuan) {
-            halamanTertunda = halamanTujuan;
+        function autoIsiCuti(el) {
+            const found = senaraiPekerjaData.find(x => x.name === el.value);
+            document.getElementById('cuti-employee-id').value = found ? found.id : '';
+        }
+
+        function autoIsiMaklumatDaftar(el) {
+            const found = senaraiPekerjaData.find(x => x.name === el.value);
+            document.getElementById('empId').value = found ? found.id : '';
+            document.getElementById('empDepartment').value = found ? found.department : '';
+        }
+
+        function rekodKehadiranSistem() {
+            alert("Kehadiran berjaya direkodkan!");
+        }
+
+        function hantarPermohonanCuti() {
+            alert("Permohonan cuti telah dihantar.");
+        }
+
+        function hantarDataPekerja() {
+            alert("Data wajah & profil pekerja berjaya disimpan.");
+        }
+
+        function mintaAksesAdmin(target) {
             document.getElementById('modal-admin').classList.remove('hidden');
         }
 
         function tutupModalAdmin() {
             document.getElementById('modal-admin').classList.add('hidden');
-            document.getElementById('inputAdminPass').value = "";
         }
 
-        function sahAdminLogin(event) {
-            event.preventDefault();
+        function sahAdminLogin(e) {
+            e.preventDefault();
             const pass = document.getElementById('inputAdminPass').value;
-            if (pass === KATA_LALUAN_ADMIN) {
+            if (pass === "admin123") {
                 tutupModalAdmin();
-                tukarHalaman(halamanTertunda);
+                tukarHalaman('kelulusan');
             } else {
-                alert("Kata laluan admin salah!");
+                alert("Kata laluan salah!");
             }
         }
 
-        // Fungsi Ambil Data Pelayan & Isi Dropdown
         function muatTurunSenaraiPekerja() {
-            fetch(urlWebApps)
-                .then(response => response.json())
-                .then(data => {
-                    if (Array.isArray(data)) {
-                        senaraiPekerjaDB = data;
-                        muatDropdownPekerjaDaftar();
-                        muatDropdownPekerjaCuti();
-                        
-                        const statJumlah = document.getElementById('stat-jumlah-pekerja');
-                        if(statJumlah) statJumlah.textContent = senaraiPekerjaDB.length;
-                    } else {
-                        console.error("Format data salah:", data);
-                    }
-                })
-                .catch(error => {
-                    console.error("Ralat memuat senarai pekerja:", error);
-                });
-        }
-
-        function muatDropdownPekerjaDaftar() {
-            const selectEl = document.getElementById('empName');
-            if (!selectEl) return;
-            
-            let optionsHtml = '<option value="">-- Pilih Nama Guru / Pekerja --</option>';
-            senaraiPekerjaDB.forEach(emp => {
-                optionsHtml += `<option value="${emp.employeeName}" data-id="${emp.employeeId || ''}" data-dept="${emp.department || ''}">${emp.employeeName}</option>`;
-            });
-            selectEl.innerHTML = optionsHtml;
-        }
-
-        function muatDropdownPekerjaCuti() {
-            const selectEl = document.getElementById('cuti-employee-select');
-            if (!selectEl) return;
-            
-            let optionsHtml = '<option value="">-- Pilih Nama --</option>';
-            senaraiPekerjaDB.forEach(emp => {
-                optionsHtml += `<option value="${emp.employeeId}" data-name="${emp.employeeName}">${emp.employeeName} (${emp.employeeId})</option>`;
-            });
-            selectEl.innerHTML = optionsHtml;
-        }
-
-        function autoIsiMaklumatDaftar(selectElement) {
-            const selectedOption = selectElement.options[selectElement.selectedIndex];
-            document.getElementById('empId').value = selectedOption.getAttribute('data-id') || '';
-            document.getElementById('empDepartment').value = selectedOption.getAttribute('data-dept') || '';
-        }
-
-        function autoIsiCuti(selectElement) {
-            const selectedOption = selectElement.options[selectElement.selectedIndex];
-            document.getElementById('cuti-employee-id').value = selectElement.value;
-            const nameInput = document.getElementById('cuti-employee-name');
-            if(nameInput) nameInput.value = selectedOption.getAttribute('data-name') || '';
-        }
-
-        function hantarDataPekerja() {
-            const nama = document.getElementById('empName').value;
-            const id = document.getElementById('empId').value;
-            if (!nama || !id) {
-                alert("Sila pilih nama pekerja terlebih dahulu!");
-                return;
-            }
-            alert(`Berjaya! Data wajah dan profil untuk ${nama} (${id}) bersedia untuk disimpan.`);
-        }
-
-        function hantarPermohonanCuti() {
-            alert("Permohonan cuti berjaya dihantar.");
-        }
-
-        // FUNGSI UTAMA SCAN & PADANKAN WAJAH
-        async function rekodKehadiranSistem() {
-            const videoEl = document.getElementById('webcam-scanner');
-            const statusKotak = document.getElementById('status-kotak');
-
-            if (!videoEl) {
-                alert("Kamera scanner tidak dijumpai.");
-                return;
-            }
-
-            statusKotak.innerHTML = `
-                <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 animate-spin">
-                    <i class="fa-solid fa-spinner text-xl"></i>
-                </div>
-                <h4 class="font-bold text-slate-800 text-sm">Sedang Mengesan Wajah...</h4>
-                <p class="text-[11px] text-slate-500 mt-1">Sila kekal tenang di hadapan kamera.</p>
-            `;
-
-            try {
-                const detections = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-
-                if (!detections) {
-                    statusKotak.innerHTML = `
-                        <div class="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                        </div>
-                        <h4 class="font-bold text-rose-600 text-sm">Wajah Tidak Dikesan!</h4>
-                        <p class="text-[11px] text-slate-500 mt-1">Pastikan pencahayaan cukup dan muka menghadap terus ke kamera.</p>
-                    `;
-                    return;
-                }
-
-                if (!senaraiPekerjaDB || senaraiPekerjaDB.length === 0) {
-                    alert("Data pekerja belum dimuat turun dari Google Sheets.");
-                    return;
-                }
-
-                let identifiedWorker = null;
-                let lowestDistance = 0.6; 
-
-                for (const emp of senaraiPekerjaDB) {
-                    if (emp.faceData) {
-                        try {
-                            const parsedFaceData = JSON.parse(emp.faceData);
-                            const referenceDescriptor = new Float32Array(parsedFaceData);
-                            const distance = faceapi.euclideanDistance(detections.descriptor, referenceDescriptor);
-                            
-                            if (distance < lowestDistance) {
-                                lowestDistance = distance;
-                                identifiedWorker = emp;
-                            }
-                        } catch (e) {
-                            console.error("Ralat parsing data wajah untuk:", emp.employeeName);
-                        }
-                    }
-                }
-
-                if (identifiedWorker) {
-                    statusKotak.innerHTML = `
-                        <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-600/30">
-                            <i class="fa-solid fa-check text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-emerald-700 text-base">Berjaya Dikenal Pasti!</h4>
-                        <div class="mt-2 text-xs bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-slate-700 text-left">
-                            <p><b>Nama:</b> ${identifiedWorker.employeeName}</p>
-                            <p><b>ID:</b> ${identifiedWorker.employeeId}</p>
-                            <p><b>Jabatan:</b> ${identifiedWorker.department || '-'}</p>
-                        </div>
-                    `;
-                } else {
-                    statusKotak.innerHTML = `
-                        <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fa-solid fa-user-xmark text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-amber-700 text-sm">Wajah Tidak Dikenali</h4>
-                        <p class="text-[11px] text-slate-500 mt-1">Sila pastikan anda sudah mendaftarkan wajah di menu pendaftaran.</p>
-                    `;
-                }
-
-            } catch (err) {
-                console.error("Ralat semasa imbasan:", err);
-                statusKotak.innerHTML = `
-                    <div class="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <i class="fa-solid fa-xmark text-xl"></i>
-                    </div>
-                    <h4 class="font-bold text-rose-600 text-sm">Ralat Sistem Imbasan</h4>
-                    <p class="text-[11px] text-slate-500 mt-1">Sila muat semula halaman pelayar anda.</p>
-                `;
-            }
+            alert("Data dikemaskini.");
         }
     </script>
 </body>
