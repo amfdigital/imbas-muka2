@@ -366,10 +366,11 @@
 
         function toggleSidebarMobile() {
             const sidebar = document.getElementById('mobile-sidebar');
-            sidebar.classList.toggle('-translate-x-full');
+            if(sidebar) sidebar.classList.toggle('-translate-x-full');
         }
 
         function tukarHalaman(halaman) {
+            // Senarai semua ID halaman yang dikawal dalam sistem
             ['dashboard', 'pekerja', 'kehadiran', 'cuti', 'kelulusan'].forEach(h => {
                 const elPage = document.getElementById(`page-${h}`);
                 const elNav = document.getElementById(`nav-${h}`);
@@ -377,6 +378,7 @@
                 if(elNav) elNav.className = "w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white transition text-left";
             });
 
+            // Paparkan halaman pilihan yang aktif
             const activePage = document.getElementById(`page-${halaman}`);
             const activeNav = document.getElementById(`nav-${halaman}`);
             if(activePage) activePage.classList.remove('hidden');
@@ -458,7 +460,6 @@
         function autoIsiCuti(selectElement) {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             document.getElementById('cuti-employee-id').value = selectElement.value;
-            // Dielakkan ralat jika elemen cuti-employee-name tidak wujud dalam HTML
             const nameInput = document.getElementById('cuti-employee-name');
             if(nameInput) nameInput.value = selectedOption.getAttribute('data-name') || '';
         }
@@ -496,7 +497,6 @@
             `;
 
             try {
-                // 1. Kesan wajah dan ciri-ciri dari video semasa
                 const detections = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions())
                     .withFaceLandmarks()
                     .withFaceDescriptor();
@@ -517,9 +517,8 @@
                     return;
                 }
 
-                // 2. Bandingkan dengan data wajah dalam pangkalan data
                 let identifiedWorker = null;
-                let lowestDistance = 0.6; // Had ralat padanan
+                let lowestDistance = 0.6; 
 
                 for (const emp of senaraiPekerjaDB) {
                     if (emp.faceData) {
@@ -538,7 +537,6 @@
                     }
                 }
 
-                // 3. Paparan Keputusan Padanan
                 if (identifiedWorker) {
                     statusKotak.innerHTML = `
                         <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-600/30">
