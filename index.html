@@ -312,6 +312,8 @@
     <script>
         let senaraiPekerjaData = [];
         const SPREADSHEET_ID = "18Cm-b6hZNsZypjROgQP3hYNyaT7UbQZ6zM9JowXytzo";
+        // URL Google Apps Script Web App yang anda berikan
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
 
         document.addEventListener("DOMContentLoaded", async () => {
             mulakanJamSemasa();
@@ -351,7 +353,6 @@
                 const json = JSON.parse(text.substring(47, text.length - 2));
                 const rows = json.table.rows;
 
-                // Gunakan .slice(1) untuk melangkau baris pertama (tajuk/header Google Sheets)
                 senaraiPekerjaData = rows.slice(1).map(row => {
                     return {
                         id: row.c[0] ? row.c[0].v : '',          
@@ -472,7 +473,6 @@
             labelNama.innerText = "Mengecam Wajah...";
             ketStatus.innerText = "Sila kekal diam di hadapan kamera.";
 
-            // 1. Dikesan muka tunggal beserta descriptor wajah
             const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
 
             if (!detection) {
@@ -488,7 +488,6 @@
             }
 
             try {
-                // 2. Sediakan senarai rujukan wajah (LabeledFaceDescriptors) daripada Google Sheets
                 const labeledDescriptors = senaraiPekerjaData.map(emp => {
                     if (emp.faceData) {
                         try {
@@ -508,7 +507,6 @@
                     return;
                 }
 
-                // 3. Bandingkan wajah menggunakan FaceMatcher (Threshold 0.6 untuk ketepatan)
                 const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
                 const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
 
@@ -519,7 +517,6 @@
                     return;
                 }
 
-                // 4. Cari maklumat pekerja berdasarkan nama yang sepadan
                 let pekerjaDikesan = senaraiPekerjaData.find(x => x.name === bestMatch.label);
 
                 if (pekerjaDikesan) {
@@ -539,30 +536,89 @@
             }
         }
 
-        function hantarKeGoogleSheets(emp) {
+        // Fungsi Daftar Wajah & Hantar Data ke Google Sheets
+        async function hantarDataPekerja() {
+            const namaPenuh = document.getElementById('empName').value;
+            const idPekerja = document.getElementById('empId').value;
+            const videoEl = document.getElementById('webcam-register');
+
+            if (!namaPenuh || !idPekerja) {
+                alert("Sila pilih nama pekerja terlebih dahulu.");
+                return;
+            }
+
+            if (!videoEl) {
+                alert("Kamera pendaftaran tidak dijumpai.");
+                return;
+            }
+
+            alert("Sila kekal diam di hadapan kamera untuk imbasan wajah...");
+
+            try {
+                const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
+
+                if (!detection) {
+                    alert("Wajah tidak dikesan oleh kamera pendaftaran. Sila cuba sekali lagi.");
+                    return;
+                }
+
+                const faceDescriptorArray = Array.from(detection.descriptor);
+                const faceDataString = JSON.stringify(faceDescriptorArray);
+
+                alert("Wajah berjaya diimbas! Menghantar data ke Google Sheets...");
+
+                const dataHantar = {
+                    action: "daftarWajah",
+                    id: idPekerja,
+                    name: namaPenuh,
+                    faceData: faceDataString
+                };
+
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dataHantar)
+                });
+
+                alert(`Data wajah untuk ${namaPenuh} berjaya dihantar ke Google Sheets!`);
+                muatDataDariGoogleSheets();
+
+            } catch (err) {
+                console.error("Ralat semasa mendaftar wajah:", err);
+                alert("Gagal menyimpan data wajah. Sila semak sambungan rangkaian.");
+            }
+        }
+
+        async function hantarKeGoogleSheets(emp) {
             const tarikhHariIni = new Date().toISOString().split('T')[0];
             const masaSemasa = new Date().toLocaleTimeString();
 
-            console.log("Merekod kehadiran:", emp.name, tarikhHariIni, masaSemasa);
-            
-            // Paparan notis berjaya direkod dengan nama sebenar pekerja
-            alert(`Kehadiran untuk ${emp.name} (ID: ${emp.id}) pada ${tarikhHariIni} (${masaSemasa}) berjaya direkodkan!`);
-            
-            // Jika anda mempunyai Google Apps Script Web App URL, buat hantaran di sini:
-            /*
-            fetch("URL_GOOGLE_APPS_SCRIPT_ANDA", {
-                method: "POST",
-                body: JSON.stringify({ id: emp.id, name: emp.name, date: tarikhHariIni, time: masaSemasa })
-            });
-            */
+            try {
+                const dataHantar = {
+                    action: "rekodKehadiran",
+                    id: emp.id,
+                    name: emp.name,
+                    date: tarikhHariIni,
+                    time: masaSemasa
+                };
+
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dataHantar)
+                });
+
+                alert(`Kehadiran untuk ${emp.name} (ID: ${emp.id}) pada ${tarikhHariIni} (${masaSemasa}) berjaya direkodkan ke Google Sheets!`);
+            } catch (err) {
+                console.error("Ralat merekod kehadiran:", err);
+                alert("Kehadiran dikesan tetapi gagal dihantar ke Google Sheets.");
+            }
         }
 
         function hantarPermohonanCuti() {
             alert("Permohonan cuti telah dihantar.");
-        }
-
-        function hantarDataPekerja() {
-            alert("Data wajah & profil pekerja berjaya disimpan.");
         }
 
         function mintaAksesAdmin(target) {
