@@ -310,7 +310,7 @@
 <!-- SKRIP KAWALAN SISTEM & AI FACE-API INTEGRATION -->
     <script>
         let senaraiPekerjaData = [];
-        let senaraiKehadiranMentah = [];
+        const SPREADSHEET_ID = "18Cm-b6hZNsZypjROgQP3hYNyaT7UbQZ6zM9JowXytzo";
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
 
         document.addEventListener("DOMContentLoaded", async () => {
@@ -318,7 +318,8 @@
             tetapkanTarikhDefaultDashboard();
 
             await muatModelAI();
-            await muatSemuaDataDariAppsScript();
+            await muatDataDariGoogleSheets();
+            await kemaskiniDashboardAnalisis(); 
             aktifkanKamera();
         });
 
@@ -330,7 +331,7 @@
                     inputTarikh.value = hariIni;
                 }
                 inputTarikh.addEventListener('change', (e) => {
-                    kiraDanPaparkanStatistik(e.target.value);
+                    kemaskiniDashboardAnalisis(e.target.value);
                 });
             }
         }
@@ -354,93 +355,100 @@
             }
         }
 
-        // Tarik Data Melalui Apps Script Web App (Paling Stabil)
-        async function muatSemuaDataDariAppsScript() {
+        async function muatDataDariGoogleSheets() {
             try {
-                const response = await fetch(`${WEB_APP_URL}?action=getData`);
-                const data = await response.json();
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Pekerja`;
+                const response = await fetch(url);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                const rows = json.table.rows;
 
-                // 1. Proses Data Pekerja (Anggap baris pertama adalah header)
-                const rowsPekerja = data.pekerja;
-                senaraiPekerjaData = rowsPekerja.slice(1).map(row => ({
-                    id: String(row[0] || '').trim(),
-                    name: String(row[1] || '').trim(),
-                    department: String(row[2] || '').trim(),
-                    position: String(row[3] || '').trim(),
-                    faceData: row[4] || ''
-                })).filter(emp => emp.name !== "" && emp.name !== "Nama Penuh");
-
-                // 2. Simpan Data Kehadiran
-                senaraiKehadiranMentah = data.kehadiran;
+                senaraiPekerjaData = rows.slice(1).map(row => {
+                    return {
+                        id: row.c[0] ? String(row.c[0].v).trim() : '',          
+                        name: row.c[1] ? String(row.c[1].v).trim() : '',        
+                        department: row.c[2] ? String(row.c[2].v).trim() : '',  
+                        position: row.c[3] ? String(row.c[3].v).trim() : '',    
+                        faceData: row.c[4] ? row.c[4].v : ''     
+                    };
+                }).filter(emp => emp.name !== "" && emp.name !== "Nama Penuh");
 
                 muatSenaraiPekerjaDropdown();
-                
-                // Paparkan jumlah pekerja
                 const statJumlah = document.getElementById('stat-jumlah-pekerja');
-                if (statJumlah) statJumlah.innerText = senaraiPekerjaData.length;
-
-                // Kira statistik dashboard berdasarkan tarikh semasa
-                kiraDanPaparkanStatistik();
-
-                console.log("Data berjaya dimuat:", senaraiPekerjaData.length, "pekerja.");
+                if(statJumlah) statJumlah.innerText = senaraiPekerjaData.length;
+                console.log("Jumlah pekerja dimuatkan:", senaraiPekerjaData.length);
             } catch (err) {
-                console.error("Ralat menarik data dari Apps Script:", err);
-                alert("Gagal memuat data dari Google Sheets. Sila semak sambungan.");
+                console.error("Ralat menarik data Pekerja:", err);
             }
         }
 
-        // Fungsi Pengiraan & Paparan Statistik Serta Senarai Nama
-        function kiraDanPaparkanStatistik(tarikhPilihan) {
-            const inputTarikh = document.querySelector('input[type="date"]') || document.getElementById('dashboard-tarikh');
-            let tarikhTarget = tarikhPilihan;
+        // Fungsi Dashboard Dikemaskini & Pastikan Butang Segar Semula Berhubung
+        async function kemaskiniDashboardAnalisis(tarikhPilihan) {
+            try {
+                const inputTarikh = document.querySelector('input[type="date"]') || document.getElementById('dashboard-tarikh');
+                let tarikhTarget = tarikhPilihan;
 
-            if (!tarikhTarget && inputTarikh && inputTarikh.value) {
-                tarikhTarget = inputTarikh.value; // Format: YYYY-MM-DD
-            }
+                if (!tarikhTarget && inputTarikh && inputTarikh.value) {
+                    tarikhTarget = inputTarikh.value; // Format YYYY-MM-DD
+                }
 
-            if (!tarikhTarget) {
-                tarikhTarget = new Date().toISOString().split('T')[0];
-                if (inputTarikh) inputTarikh.value = tarikhTarget;
-            }
+                if (!tarikhTarget) {
+                    tarikhTarget = new Date().toISOString().split('T')[0];
+                    if (inputTarikh) inputTarikh.value = tarikhTarget;
+                }
 
-            // Tukar format tarikh kepada pelbagai variasi untuk padanan (YYYY-MM-DD atau DD/MM/YYYY)
-            const [tahun, bulan, hari] = tarikhTarget.split('-');
-            const format1 = `${tahun}-${bulan}-${hari}`;
-            const format2 = `${parseInt(hari)}/${parseInt(bulan)}/${tahun}`;
-            const format3 = `${hari}/${bulan}/${tahun}`;
+                console.log("Mula semak kehadiran untuk tarikh:", tarikhTarget);
 
-            let idHadirSet = new Set();
+                const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Kehadiran`;
+                const response = await fetch(url);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                const rows = json.table.rows;
 
-            // Semak senarai kehadiran
-            if (senaraiKehadiranMentah && senaraiKehadiranMentah.length > 1) {
-                senaraiKehadiranMentah.slice(1).forEach(row => {
-                    let barisString = row.join(" | ");
-                    // Jika baris mengandungi tarikh sasaran
-                    if (barisString.includes(format1) || barisString.includes(format2) || barisString.includes(format3)) {
-                        // Cari ID pekerja yang wujud dalam baris ini
-                        row.forEach(cell => {
-                            let cellStr = String(cell).trim();
-                            let pekerjaPadan = senaraiPekerjaData.find(p => p.id === cellStr || p.name.toLowerCase() === cellStr.toLowerCase());
-                            if (pekerjaPadan) {
-                                idHadirSet.add(pekerjaPadan.id);
-                            }
+                let senaraiHadirHariIni = new Set();
+                
+                const [tahun, bulan, hari] = tarikhTarget.split('-');
+                const formatAlt1 = `${parseInt(hari)}/${parseInt(bulan)}/${tahun}`;
+                const formatAlt2 = `${hari}/${bulan}/${tahun}`;
+
+                rows.slice(1).forEach((row) => {
+                    if (row.c) {
+                        let barisTeks = "";
+                        row.c.forEach(sel => {
+                            if (sel && sel.v !== undefined) barisTeks += " " + String(sel.v);
                         });
+
+                        // Jika baris mengandungi tarikh hari ini
+                        if (barisTeks.includes(tarikhTarget) || barisTeks.includes(formatAlt1) || barisTeks.includes(formatAlt2)) {
+                            // Cari ID pekerja yang wujud dalam senarai pekerja
+                            row.c.forEach(sel => {
+                                if (sel && sel.v !== undefined) {
+                                    let val = String(sel.v).trim();
+                                    let padan = senaraiPekerjaData.find(p => p.id === val || p.name.toLowerCase() === val.toLowerCase());
+                                    if (padan) {
+                                        senaraiHadirHariIni.add(padan.id);
+                                    }
+                                }
+                            });
+                        }
                     }
                 });
+
+                console.log("Senarai ID hadir dijumpai:", Array.from(senaraiHadirHariIni));
+
+                const jumlahHadir = senaraiHadirHariIni.size;
+                const jumlahPekerja = senaraiPekerjaData.length;
+                const jumlahTidakHadir = Math.max(0, jumlahPekerja - jumlahHadir);
+
+                const elHadir = document.getElementById('stat-hadir') || document.getElementById('stat-hadir-hari-ini');
+                const elTidakHadir = document.getElementById('stat-tidak-hadir');
+                
+                if (elHadir) elHadir.innerText = jumlahHadir;
+                if (elTidakHadir) elTidakHadir.innerText = jumlahTidakHadir;
+
+            } catch (err) {
+                console.error("Ralat mengira statistik dashboard:", err);
             }
-
-            let jumlahPekerja = senaraiPekerjaData.length;
-            let jumlahHadir = idHadirSet.size;
-            let jumlahTidakHadir = Math.max(0, jumlahPekerja - jumlahHadir);
-
-            // Kemaskini Paparan Angka pada Dashboard
-            const elHadir = document.getElementById('stat-hadir') || document.getElementById('stat-hadir-hari-ini');
-            const elTidakHadir = document.getElementById('stat-tidak-hadir');
-
-            if (elHadir) elHadir.innerText = jumlahHadir;
-            if (elTidakHadir) elTidakHadir.innerText = jumlahTidakHadir;
-
-            console.log(`Tarikh: ${tarikhTarget} | Hadir: ${jumlahHadir} | Tidak Hadir: ${jumlahTidakHadir}`);
         }
 
         function tukarHalaman(pageId) {
@@ -573,7 +581,7 @@
                 }).filter(item => item !== null);
 
                 if (labeledDescriptors.length === 0) {
-                    alert("Tiada rekod 'Data Wajah' yang sah dijumpai dalam Google Sheets.");
+                    alert("Tiada rekod 'Data Wajah' yang sah dijumpai dalam Google Sheets untuk dibuat perbandingan.");
                     labelNama.innerText = "Tiada Data Wajah Rujukan";
                     return;
                 }
@@ -583,8 +591,8 @@
 
                 if (bestMatch.label === 'unknown') {
                     labelNama.innerText = "Wajah Tidak Dikenali!";
-                    ketStatus.innerText = "Sila daftar wajah anda terlebih dahulu.";
-                    alert("Wajah anda tidak padan dengan mana-mana rekod pekerja.");
+                    ketStatus.innerText = "Sila daftar wajah anda terlebih dahulu di menu 'Daftar Wajah Pekerja'.";
+                    alert("Wajah anda tidak padan dengan mana-mana rekod pekerja dalam sistem.");
                     return;
                 }
 
@@ -601,8 +609,9 @@
                 }
 
             } catch (err) {
-                console.error("Ralat proses padanan wajah:", err);
+                console.error("Ralat semasa proses padanan wajah:", err);
                 labelNama.innerText = "Ralat Sistem AI";
+                ketStatus.innerText = "Sila cuba sekali lagi.";
             }
         }
 
@@ -627,7 +636,7 @@
                 const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
 
                 if (!detection) {
-                    alert("Wajah tidak dikesan. Sila cuba lagi.");
+                    alert("Wajah tidak dikesan oleh kamera pendaftaran. Sila cuba sekali lagi.");
                     return;
                 }
 
@@ -650,12 +659,12 @@
                     body: JSON.stringify(dataHantar)
                 });
 
-                alert(`Data wajah untuk ${namaPenuh} berjaya disimpan!`);
-                muatSemuaDataDariAppsScript();
+                alert(`Data wajah untuk ${namaPenuh} berjaya dihantar ke Google Sheets!`);
+                muatDataDariGoogleSheets();
 
             } catch (err) {
-                console.error("Ralat mendaftar wajah:", err);
-                alert("Gagal menyimpan data wajah.");
+                console.error("Ralat semasa mendaftar wajah:", err);
+                alert("Gagal menyimpan data wajah. Sila semak sambungan rangkaian.");
             }
         }
 
@@ -679,14 +688,13 @@
                     body: JSON.stringify(dataHantar)
                 });
 
-                alert(`Kehadiran untuk ${emp.name} (ID: ${emp.id}) berjaya direkodkan!`);
+                alert(`Kehadiran untuk ${emp.name} (ID: ${emp.id}) pada ${tarikhHariIni} (${masaSemasa}) berjaya direkodkan ke Google Sheets!`);
                 
-                // Muat semula data supaya dashboard terus kemaskini
-                await muatSemuaDataDariAppsScript();
+                await kemaskiniDashboardAnalisis();
             
             } catch (err) {
                 console.error("Ralat merekod kehadiran:", err);
-                alert("Gagal merekod kehadiran ke Google Sheets.");
+                alert("Kehadiran dikesan tetapi gagal dihantar ke Google Sheets.");
             }
         }
 
@@ -713,8 +721,10 @@
             }
         }
 
+        // Sambungkan fungsi ini pada butang "Segar Semula" di HTML anda
         function muatTurunSenaraiPekerja() {
-            muatSemuaDataDariAppsScript();
+            muatDataDariGoogleSheets();
+            kemaskiniDashboardAnalisis();
             alert("Data dikemaskini dari Google Sheets.");
         }
     </script>
