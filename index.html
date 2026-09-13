@@ -307,7 +307,6 @@
 
         </div>
     </div>
-
 <!-- SKRIP KAWALAN SISTEM & AI FACE-API INTEGRATION -->
     <script>
         let senaraiPekerjaData = [];
@@ -316,9 +315,7 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             mulakanJamSemasa();
-            
-            // Set tarikh hari ini secara automatik pada input tarikh dashboard jika ia wujud
-             tetapkanTarikhDefaultDashboard();
+            tetapkanTarikhDefaultDashboard();
 
             await muatModelAI();
             await muatDataDariGoogleSheets();
@@ -333,14 +330,12 @@
                 if (!inputTarikh.value) {
                     inputTarikh.value = hariIni;
                 }
-                // Pastikan event listener dipasang jika pengguna menukar tarikh
                 inputTarikh.addEventListener('change', (e) => {
                     kemaskiniDashboardAnalisis(e.target.value);
                 });
             }
         }
 
-        // Muat Model AI Face-API
         async function muatModelAI() {
             try {
                 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model/';
@@ -357,12 +352,9 @@
                 }
             } catch (err) {
                 console.error("Ralat memuat model AI:", err);
-                const statusModel = document.getElementById('text-model-kamera');
-                if (statusModel) statusModel.innerText = "Gagal Muat Model AI";
             }
         }
 
-        // Tarik Data dari Tab 'Pekerja' Google Sheets
         async function muatDataDariGoogleSheets() {
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Pekerja`;
@@ -373,10 +365,10 @@
 
                 senaraiPekerjaData = rows.slice(1).map(row => {
                     return {
-                        id: row.c[0] ? row.c[0].v : '',          
-                        name: row.c[1] ? row.c[1].v : '',        
-                        department: row.c[2] ? row.c[2].v : '',  
-                        position: row.c[3] ? row.c[3].v : '',    
+                        id: row.c[0] ? String(row.c[0].v).trim() : '',          
+                        name: row.c[1] ? String(row.c[1].v).trim() : '',        
+                        department: row.c[2] ? String(row.c[2].v).trim() : '',  
+                        position: row.c[3] ? String(row.c[3].v).trim() : '',    
                         faceData: row.c[4] ? row.c[4].v : ''     
                     };
                 }).filter(emp => emp.name !== "" && emp.name !== "Nama Penuh");
@@ -384,25 +376,28 @@
                 muatSenaraiPekerjaDropdown();
                 const statJumlah = document.getElementById('stat-jumlah-pekerja');
                 if(statJumlah) statJumlah.innerText = senaraiPekerjaData.length;
+                console.log("Jumlah pekerja dimuatkan:", senaraiPekerjaData.length);
             } catch (err) {
-                console.error("Ralat menarik data Google Sheets:", err);
+                console.error("Ralat menarik data Pekerja:", err);
             }
         }
 
-        // Fungsi Pengiraan Analisis Kehadiran yang Dipertingkatkan (Menyokong pelbagai format tarikh)
+        // Fungsi Dashboard Dikemaskini & Pastikan Butang Segar Semula Berhubung
         async function kemaskiniDashboardAnalisis(tarikhPilihan) {
             try {
                 const inputTarikh = document.querySelector('input[type="date"]') || document.getElementById('dashboard-tarikh');
                 let tarikhTarget = tarikhPilihan;
 
                 if (!tarikhTarget && inputTarikh && inputTarikh.value) {
-                    tarikhTarget = inputTarikh.value; // Format dari input type="date" ialah YYYY-MM-DD
+                    tarikhTarget = inputTarikh.value; // Format YYYY-MM-DD
                 }
 
                 if (!tarikhTarget) {
                     tarikhTarget = new Date().toISOString().split('T')[0];
                     if (inputTarikh) inputTarikh.value = tarikhTarget;
                 }
+
+                console.log("Mula semak kehadiran untuk tarikh:", tarikhTarget);
 
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Kehadiran`;
                 const response = await fetch(url);
@@ -412,27 +407,34 @@
 
                 let senaraiHadirHariIni = new Set();
                 
-                // Pecahkan tarikh YYYY-MM-DD kepada komponen untuk padanan fleksibel (DD/MM/YYYY atau YYYY-MM-DD)
                 const [tahun, bulan, hari] = tarikhTarget.split('-');
-                const tarikhFormatDMY = `${parseInt(hari)}/${parseInt(bulan)}/${tahun}`;
-                const tarikhFormatDMYZero = `${hari}/${bulan}/${tahun}`;
+                const formatAlt1 = `${parseInt(hari)}/${parseInt(bulan)}/${tahun}`;
+                const formatAlt2 = `${hari}/${bulan}/${tahun}`;
 
-                rows.slice(1).forEach(row => {
-                    // Semak pelbagai kolum sekiranya tarikh berada di kolum A atau B
-                    const valCol0 = row.c[0] ? String(row.c[0].v || row.c[0].f || '') : '';
-                    const valCol1 = row.c[1] ? String(row.c[1].v || '') : '';
-                    const valCol2 = row.c[2] ? String(row.c[2].v || '') : ''; // Manatau ID ada di kolum lain
+                rows.slice(1).forEach((row) => {
+                    if (row.c) {
+                        let barisTeks = "";
+                        row.c.forEach(sel => {
+                            if (sel && sel.v !== undefined) barisTeks += " " + String(sel.v);
+                        });
 
-                    // Cari padanan tarikh (sama ada mengandungi YYYY-MM-DD atau DD/MM/YYYY)
-                    const padanTarikh = valCol0.includes(tarikhTarget) || 
-                                        valCol0.includes(tarikhFormatDMY) || 
-                                        valCol0.includes(tarikhFormatDMYZero);
-
-                    if (padanTarikh) {
-                        // Cuba kenal pasti ID pekerja sama ada di kolum 1, 2 atau teks baris
-                        if (valCol1) senaraiHadirHariIni.add(valCol1.trim());
+                        // Jika baris mengandungi tarikh hari ini
+                        if (barisTeks.includes(tarikhTarget) || barisTeks.includes(formatAlt1) || barisTeks.includes(formatAlt2)) {
+                            // Cari ID pekerja yang wujud dalam senarai pekerja
+                            row.c.forEach(sel => {
+                                if (sel && sel.v !== undefined) {
+                                    let val = String(sel.v).trim();
+                                    let padan = senaraiPekerjaData.find(p => p.id === val || p.name.toLowerCase() === val.toLowerCase());
+                                    if (padan) {
+                                        senaraiHadirHariIni.add(padan.id);
+                                    }
+                                }
+                            });
+                        }
                     }
                 });
+
+                console.log("Senarai ID hadir dijumpai:", Array.from(senaraiHadirHariIni));
 
                 const jumlahHadir = senaraiHadirHariIni.size;
                 const jumlahPekerja = senaraiPekerjaData.length;
@@ -719,6 +721,7 @@
             }
         }
 
+        // Sambungkan fungsi ini pada butang "Segar Semula" di HTML anda
         function muatTurunSenaraiPekerja() {
             muatDataDariGoogleSheets();
             kemaskiniDashboardAnalisis();
