@@ -308,22 +308,39 @@
         </div>
     </div>
 
-   <!-- SKRIP KAWALAN SISTEM & AI FACE-API INTEGRATION -->
+<!-- SKRIP KAWALAN SISTEM & AI FACE-API INTEGRATION -->
     <script>
         let senaraiPekerjaData = [];
         const SPREADSHEET_ID = "18Cm-b6hZNsZypjROgQP3hYNyaT7UbQZ6zM9JowXytzo";
-        // URL Google Apps Script Web App yang anda berikan
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0EwGZvITb8JyEbdwo7QZFeApfIqMl6y86U-eqFpaSyaqttCb1TN4Z-7F8cK_53Qot/exec";
 
         document.addEventListener("DOMContentLoaded", async () => {
             mulakanJamSemasa();
+            
+            // Set tarikh hari ini secara automatik pada input tarikh dashboard jika ia wujud
+             tetapkanTarikhDefaultDashboard();
+
             await muatModelAI();
             await muatDataDariGoogleSheets();
-            await kemaskiniDashboardAnalisis(); // Kemaskini statistik kehadiran pada dashboard
+            await kemaskiniDashboardAnalisis(); 
             aktifkanKamera();
         });
 
-        // Muat Model AI Face-API (SsdMobilenetv1 & FaceLandmark68Net)
+        function tetapkanTarikhDefaultDashboard() {
+            const inputTarikh = document.querySelector('input[type="date"]') || document.getElementById('dashboard-tarikh');
+            const hariIni = new Date().toISOString().split('T')[0];
+            if (inputTarikh) {
+                if (!inputTarikh.value) {
+                    inputTarikh.value = hariIni;
+                }
+                // Pastikan event listener dipasang jika pengguna menukar tarikh
+                inputTarikh.addEventListener('change', (e) => {
+                    kemaskiniDashboardAnalisis(e.target.value);
+                });
+            }
+        }
+
+        // Muat Model AI Face-API
         async function muatModelAI() {
             try {
                 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model/';
@@ -345,7 +362,7 @@
             }
         }
 
-        // Tarik Data dari Tab 'Pekerja' Google Sheets (Dilangkau baris pertama tajuk)
+        // Tarik Data dari Tab 'Pekerja' Google Sheets
         async function muatDataDariGoogleSheets() {
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Pekerja`;
@@ -372,11 +389,21 @@
             }
         }
 
-        // Fungsi Pengiraan Analisis Kehadiran untuk Dashboard
+        // Fungsi Pengiraan Analisis Kehadiran yang Dipertingkatkan (Menyokong pelbagai format tarikh)
         async function kemaskiniDashboardAnalisis(tarikhPilihan) {
             try {
-                const tarikhTarget = tarikhPilihan || new Date().toISOString().split('T')[0];
-                
+                const inputTarikh = document.querySelector('input[type="date"]') || document.getElementById('dashboard-tarikh');
+                let tarikhTarget = tarikhPilihan;
+
+                if (!tarikhTarget && inputTarikh && inputTarikh.value) {
+                    tarikhTarget = inputTarikh.value; // Format dari input type="date" ialah YYYY-MM-DD
+                }
+
+                if (!tarikhTarget) {
+                    tarikhTarget = new Date().toISOString().split('T')[0];
+                    if (inputTarikh) inputTarikh.value = tarikhTarget;
+                }
+
                 const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Kehadiran`;
                 const response = await fetch(url);
                 const text = await response.text();
@@ -385,13 +412,25 @@
 
                 let senaraiHadirHariIni = new Set();
                 
-                // Semak tab Kehadiran (Kolum A: Tarikh & Masa, Kolum B: ID Pekerja)
+                // Pecahkan tarikh YYYY-MM-DD kepada komponen untuk padanan fleksibel (DD/MM/YYYY atau YYYY-MM-DD)
+                const [tahun, bulan, hari] = tarikhTarget.split('-');
+                const tarikhFormatDMY = `${parseInt(hari)}/${parseInt(bulan)}/${tahun}`;
+                const tarikhFormatDMYZero = `${hari}/${bulan}/${tahun}`;
+
                 rows.slice(1).forEach(row => {
-                    const tarikhMasaStr = row.c[0] ? row.c[0].v : '';
-                    const idTemp = row.c[1] ? row.c[1].v : '';
-                    
-                    if (tarikhMasaStr.includes(tarikhTarget) && idTemp) {
-                        senaraiHadirHariIni.add(idTemp.toString());
+                    // Semak pelbagai kolum sekiranya tarikh berada di kolum A atau B
+                    const valCol0 = row.c[0] ? String(row.c[0].v || row.c[0].f || '') : '';
+                    const valCol1 = row.c[1] ? String(row.c[1].v || '') : '';
+                    const valCol2 = row.c[2] ? String(row.c[2].v || '') : ''; // Manatau ID ada di kolum lain
+
+                    // Cari padanan tarikh (sama ada mengandungi YYYY-MM-DD atau DD/MM/YYYY)
+                    const padanTarikh = valCol0.includes(tarikhTarget) || 
+                                        valCol0.includes(tarikhFormatDMY) || 
+                                        valCol0.includes(tarikhFormatDMYZero);
+
+                    if (padanTarikh) {
+                        // Cuba kenal pasti ID pekerja sama ada di kolum 1, 2 atau teks baris
+                        if (valCol1) senaraiHadirHariIni.add(valCol1.trim());
                     }
                 });
 
@@ -399,7 +438,6 @@
                 const jumlahPekerja = senaraiPekerjaData.length;
                 const jumlahTidakHadir = Math.max(0, jumlahPekerja - jumlahHadir);
 
-                // Paparkan pada kad dashboard (pastikan ID elemen HTML wujud)
                 const elHadir = document.getElementById('stat-hadir') || document.getElementById('stat-hadir-hari-ini');
                 const elTidakHadir = document.getElementById('stat-tidak-hadir');
                 
@@ -499,7 +537,6 @@
             document.getElementById('empDepartment').value = found ? found.department : '';
         }
 
-        // Fungsi Utama: Imbas Wajah & Padankan dengan Data Google Sheets Menggunakan FaceMatcher
         async function rekodKehadiranSistem() {
             const videoEl = document.getElementById('webcam-scanner');
             const labelNama = document.getElementById('status-nama-pekerja');
@@ -576,7 +613,6 @@
             }
         }
 
-        // Fungsi Daftar Wajah & Hantar Data ke Google Sheets
         async function hantarDataPekerja() {
             const namaPenuh = document.getElementById('empName').value;
             const idPekerja = document.getElementById('empId').value;
@@ -652,7 +688,6 @@
 
                 alert(`Kehadiran untuk ${emp.name} (ID: ${emp.id}) pada ${tarikhHariIni} (${masaSemasa}) berjaya direkodkan ke Google Sheets!`);
                 
-                // Kemaskini semula statistik dashboard selepas kehadiran direkod
                 await kemaskiniDashboardAnalisis();
             
             } catch (err) {
